@@ -1,0 +1,77 @@
+# ===========================
+# 1️⃣ Builder Stage
+# ===========================
+FROM node:18-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy root package and config files
+COPY package*.json ./
+COPY nx.json ./
+COPY tsconfig.base.json ./
+# COPY data-source.ts ./
+COPY apps ./apps
+COPY libs ./libs
+
+# Install global NX and dependencies
+RUN npm install -g nx@latest
+RUN npm ci
+
+# Set environment variables for build
+ENV NX_DAEMON=false
+ENV NODE_OPTIONS="--experimental-vm-modules"
+
+# Build the required libraries first (same order as admin)
+RUN npx nx build types
+RUN npx nx build data-access
+RUN npx nx build design-system
+RUN npx nx build utils
+RUN npx nx build ui
+
+# Build the API
+RUN npx nx build api
+
+# ===========================
+# 2️⃣ Production Stage
+# ===========================
+FROM node:18-alpine AS runner
+
+# Set working directory
+WORKDIR /app
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S api -u 1001
+
+# Copy package files and install all dependencies (needed for NX monorepo)
+COPY package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+
+# Copy built application and all libraries from builder stage
+COPY --from=builder --chown=api:nodejs /app/dist ./dist
+
+# Copy configuration files that might be needed at runtime
+COPY --from=builder --chown=api:nodejs /app/nx.json ./nx.json
+COPY --from=builder --chown=api:nodejs /app/tsconfig.base.json ./tsconfig.base.json
+
+# Create symlinks for NX path mappings to resolve module imports
+RUN mkdir -p node_modules/@shreehari && \
+    ln -sf /app/dist/libs/ui node_modules/@shreehari/ui && \
+    ln -sf /app/dist/libs/design-system node_modules/@shreehari/design-system && \
+    ln -sf /app/dist/libs/types node_modules/@shreehari/types && \
+    ln -sf /app/dist/libs/data-access node_modules/@shreehari/data-access && \
+    ln -sf /app/dist/libs/utils node_modules/@shreehari/utils
+
+# Switch to non-root user
+USER api
+
+# Expose port 3000
+EXPOSE 3000
+
+# Set environment variables
+ENV PORT=3000
+ENV NODE_ENV=production
+
+# Start the application
+CMD ["node", "dist/apps/api/src/main.js"]

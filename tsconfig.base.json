@@ -1,0 +1,33 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2015",
+    "module": "esnext",
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "strict": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "paths": {
+      "@shreehari/ui": ["libs/ui/src/index.ts"],
+      "@shreehari/design-system": ["libs/design-system/src/index.ts"],
+      "@shreehari/features/orders": ["libs/features/orders/src/index.ts"],
+      "@shreehari/features/products": ["libs/features/products/src/index.ts"],
+      "@shreehari/features/customers": ["libs/features/customers/src/index.ts"],
+      "@shreehari/types": ["libs/types/src/index.ts"],
+      "@shreehari/data-access": ["libs/data-access/src/index.ts"],
+      "@shreehari/server-utils": ["libs/server-utils/src/index.ts"],
+      "@shreehari/utils": ["libs/utils/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "@shreehari/types",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/types",
+        "main": "libs/types/src/index.ts",
+        "tsConfig": "libs/types/tsconfig.lib.json",
+        "assets": ["libs/types/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/types/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "jestConfig": "libs/types/jest.config.ts"
+      }
+    }
+  },
+  "tags": ["type:types", "scope:shared"]
+}
