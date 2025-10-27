@@ -20,7 +20,7 @@ import {
   type PageHeaderAction,
   type FilterOption,
 } from '@shreehari/ui';
-import { formatCurrency } from '@shreehari/utils';
+import { formatCurrency, getImageUrl } from '@shreehari/utils';
 
 export const ProductsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -184,7 +184,7 @@ export const ProductsPage: React.FC = () => {
       render: (value, record) => (
         <Group gap="sm">
           <Image
-            src={record.imageUrl}
+            src={getImageUrl(record.imageUrl)}
             w={40}
             h={40}
             radius="sm"

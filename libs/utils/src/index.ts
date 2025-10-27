@@ -56,6 +56,25 @@ export const slugify = (text: string) => {
     .replace(/^-+|-+$/g, '');
 };
 
+/**
+ * Get full image URL from relative path
+ * @param imageUrl - The image URL (can be relative or absolute)
+ * @param baseUrl - Base URL for the API (default: http://localhost:3000)
+ * @param fallbackUrl - Optional fallback URL if imageUrl is empty
+ * @returns Full image URL
+ */
+export const getImageUrl = (
+  imageUrl?: string | null,
+  baseUrl = 'http://localhost:3000',
+  fallbackUrl = 'https://via.placeholder.com/150'
+) => {
+  if (!imageUrl) return fallbackUrl;
+  // If imageUrl is already a full URL, return it
+  if (imageUrl.startsWith('http')) return imageUrl;
+  // Otherwise, prepend the base URL
+  return `${baseUrl}${imageUrl}`;
+};
+
 export const generateId = () => {
   return Math.random().toString(36).substr(2, 9);
 };

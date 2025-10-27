@@ -89,7 +89,7 @@ export const ProductFormPage: React.FC = () => {
           description: formData.description || undefined,
           isAvailable: formData.isAvailable,
         };
-        await updateProduct(id, updateData);
+        await updateProduct(id, updateData, formData.imageFile);
         notifications.show({
           title: 'Success',
           message: 'Product updated successfully',
@@ -103,7 +103,7 @@ export const ProductFormPage: React.FC = () => {
           unit: formData.unit,
           description: formData.description || undefined,
         };
-        await createProduct(createData);
+        await createProduct(createData, formData.imageFile);
         notifications.show({
           title: 'Success',
           message: 'Product created successfully',
@@ -153,7 +153,7 @@ export const ProductFormPage: React.FC = () => {
         description: formData.description || undefined,
       };
 
-      await createProduct(productData);
+      await createProduct(productData, formData.imageFile);
       notifications.show({
         title: 'Success',
         message: 'Product created successfully',

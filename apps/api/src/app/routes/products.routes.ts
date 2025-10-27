@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { DatabaseService } from '@shreehari/data-access';
+import { upload } from '../middleware/upload.middleware';
 
 const router = Router();
 
@@ -79,12 +80,25 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create new product
-router.post('/', async (req, res) => {
+router.post('/', upload.single('image'), async (req, res) => {
   try {
     const dbService = DatabaseService.getInstance();
     const productRepo = dbService.getProductRepository();
 
-    const product = await productRepo.create(req.body);
+    // Prepare product data
+    const productData = {
+      ...req.body,
+      // Convert numeric fields from string to number
+      price: parseFloat(req.body.price),
+      quantity: parseInt(req.body.quantity, 10),
+    };
+
+    // Add image URL if file was uploaded
+    if (req.file) {
+      productData.imageUrl = `/uploads/products/${req.file.filename}`;
+    }
+
+    const product = await productRepo.create(productData);
 
     res.status(201).json({
       success: true,
@@ -102,12 +116,34 @@ router.post('/', async (req, res) => {
 });
 
 // Update product
-router.put('/:id', async (req, res) => {
+router.put('/:id', upload.single('image'), async (req, res) => {
   try {
     const dbService = DatabaseService.getInstance();
     const productRepo = dbService.getProductRepository();
 
-    const product = await productRepo.update(req.params.id, req.body);
+    // Prepare product data
+    const productData = {
+      ...req.body,
+    };
+
+    // Convert numeric fields if they exist
+    if (req.body.price) {
+      productData.price = parseFloat(req.body.price);
+    }
+    if (req.body.quantity) {
+      productData.quantity = parseInt(req.body.quantity, 10);
+    }
+    if (req.body.isAvailable !== undefined) {
+      productData.isAvailable =
+        req.body.isAvailable === 'true' || req.body.isAvailable === true;
+    }
+
+    // Add image URL if file was uploaded
+    if (req.file) {
+      productData.imageUrl = `/uploads/products/${req.file.filename}`;
+    }
+
+    const product = await productRepo.update(req.params.id, productData);
 
     if (!product) {
       return res.status(404).json({

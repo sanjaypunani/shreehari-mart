@@ -413,18 +413,46 @@ export const useCreateProduct = () => {
   const [error, setError] = useState<string | null>(null);
 
   const createProduct = async (
-    productData: CreateProductDto
+    productData: CreateProductDto,
+    imageFile?: File | null
   ): Promise<ProductDto> => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await apiCall<ProductDto>('/products', {
-        method: 'POST',
-        body: JSON.stringify(productData),
-      });
+      // Use FormData if there's an image file
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append('name', productData.name);
+        formData.append('price', productData.price.toString());
+        formData.append('quantity', productData.quantity.toString());
+        formData.append('unit', productData.unit);
+        if (productData.description) {
+          formData.append('description', productData.description);
+        }
+        formData.append('image', imageFile);
 
-      return response.data;
+        const response = await fetch(`${API_BASE_URL}/products`, {
+          method: 'POST',
+          body: formData,
+          // Don't set Content-Type header, browser will set it with boundary for multipart/form-data
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create product');
+        }
+
+        const result = await response.json();
+        return result.data;
+      } else {
+        // Use JSON if no image
+        const response = await apiCall<ProductDto>('/products', {
+          method: 'POST',
+          body: JSON.stringify(productData),
+        });
+
+        return response.data;
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to create product';
@@ -444,18 +472,50 @@ export const useUpdateProduct = () => {
 
   const updateProduct = async (
     id: string,
-    productData: UpdateProductDto
+    productData: UpdateProductDto,
+    imageFile?: File | null
   ): Promise<ProductDto> => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await apiCall<ProductDto>(`/products/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(productData),
-      });
+      // Use FormData if there's an image file
+      if (imageFile) {
+        const formData = new FormData();
+        if (productData.name) formData.append('name', productData.name);
+        if (productData.price !== undefined)
+          formData.append('price', productData.price.toString());
+        if (productData.quantity !== undefined)
+          formData.append('quantity', productData.quantity.toString());
+        if (productData.unit) formData.append('unit', productData.unit);
+        if (productData.description !== undefined) {
+          formData.append('description', productData.description || '');
+        }
+        if (productData.isAvailable !== undefined) {
+          formData.append('isAvailable', productData.isAvailable.toString());
+        }
+        formData.append('image', imageFile);
 
-      return response.data;
+        const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+          method: 'PUT',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update product');
+        }
+
+        const result = await response.json();
+        return result.data;
+      } else {
+        // Use JSON if no image
+        const response = await apiCall<ProductDto>(`/products/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(productData),
+        });
+
+        return response.data;
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to update product';

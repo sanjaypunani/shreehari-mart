@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import ordersRouter from './routes/orders.routes';
 import productsRouter from './routes/products.routes';
 import customersRouter from './routes/customers.routes';
@@ -48,6 +49,9 @@ export const createServer = () => {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(requestLogger);
+
+  // Serve static files from uploads directory
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // Health check
   app.get('/health', (req, res) => {
