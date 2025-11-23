@@ -72,6 +72,9 @@ import {
 // const API_BASE_URL = 'https://api.shreeharimartindia.in/api';
 const API_BASE_URL = 'http://localhost:3000/api';
 
+// Export API_BASE_URL for use in other parts of the application
+export { API_BASE_URL };
+
 // Generic API fetch function
 const apiCall = async <T>(
   endpoint: string,

@@ -13,6 +13,8 @@ import {
 import { IconX, IconChevronDown } from '@tabler/icons-react';
 import { colors, spacing, radius, shadow, typography } from '../../theme';
 import { Text, Image, Button } from '../ui';
+import { useCartStore } from '../../store';
+import { calculateItemPrice } from '../../utils';
 
 export interface ProductDetailDrawerProps {
   opened: boolean;
@@ -21,16 +23,18 @@ export interface ProductDetailDrawerProps {
     id: string;
     name: string;
     image: string;
-    price: number;
-    originalPrice?: number;
+    price: number; // Base price from API
+    baseQuantity: number; // Base quantity from API (e.g., 250)
+    unit: 'gm' | 'kg' | 'pc'; // Unit from API
     discount?: number;
-    quantity: string;
+    quantity: string; // Display string (e.g., "250gm")
     deliveryTime?: string;
     variants?: Array<{
       value: string;
       label: string;
-      price: number;
-      originalPrice?: number;
+      price?: number; // Optional, calculated on-demand if not provided
+      quantity: number;
+      unit?: 'gm' | 'kg' | 'pc';
     }>;
   };
 }
@@ -40,49 +44,123 @@ export function ProductDetailDrawer({
   onClose,
   product,
 }: ProductDetailDrawerProps) {
+  console.log('ProductDetailDrawer render - product:', product);
+  // Hooks must be called before any conditional returns
+  const addItem = useCartStore((state) => state.addItem);
+
+  // Generate quantity variants based on product unit
+  // Prices are calculated on-demand, not stored in variants
+  const quantityOptions = React.useMemo(() => {
+    if (!product) return [];
+
+    // If custom variants exist, use them
+    if (product.variants && product.variants.length > 0) {
+      return product.variants;
+    }
+
+    // For pieces, generate 1pc to 5pc
+    if (product.unit === 'pc') {
+      return [
+        {
+          value: '1pc',
+          label: '1 pc',
+          quantity: 1,
+          unit: 'pc' as const,
+        },
+        {
+          value: '2pc',
+          label: '2 pc',
+          quantity: 2,
+          unit: 'pc' as const,
+        },
+        {
+          value: '3pc',
+          label: '3 pc',
+          quantity: 3,
+          unit: 'pc' as const,
+        },
+        {
+          value: '4pc',
+          label: '4 pc',
+          quantity: 4,
+          unit: 'pc' as const,
+        },
+        {
+          value: '5pc',
+          label: '5 pc',
+          quantity: 5,
+          unit: 'pc' as const,
+        },
+      ];
+    }
+
+    // For gm/kg units: 250gm, 500gm, 1kg, 2kg
+    return [
+      {
+        value: '250gm',
+        label: '250 gm',
+        quantity: 250,
+        unit: 'gm' as const,
+      },
+      {
+        value: '500gm',
+        label: '500 gm',
+        quantity: 500,
+        unit: 'gm' as const,
+      },
+      {
+        value: '1kg',
+        label: '1 kg',
+        quantity: 1,
+        unit: 'kg' as const,
+      },
+      {
+        value: '2kg',
+        label: '2 kg',
+        quantity: 2,
+        unit: 'kg' as const,
+      },
+    ];
+  }, [product]);
+
+  const [selectedVariant, setSelectedVariant] = React.useState('');
+
+  // Update selected variant when product or quantityOptions change
+  React.useEffect(() => {
+    if (quantityOptions.length > 0 && !selectedVariant) {
+      setSelectedVariant(quantityOptions[0].value);
+    }
+  }, [quantityOptions, selectedVariant]);
+
+  const currentVariant = React.useMemo(() => {
+    return (
+      quantityOptions.find((v) => v.value === selectedVariant) ||
+      quantityOptions[0]
+    );
+  }, [quantityOptions, selectedVariant]);
+
+  // Calculate price on-demand for current variant
+  const currentPrice = React.useMemo(() => {
+    if (!product || !currentVariant) return 0;
+
+    // If variant has pre-calculated price, use it
+    if (currentVariant.price !== undefined) {
+      return currentVariant.price;
+    }
+
+    // Otherwise, calculate on-demand using backend logic
+    const variantUnit = currentVariant.unit || product.unit;
+    return calculateItemPrice(
+      currentVariant.quantity,
+      variantUnit,
+      product.price,
+      product.baseQuantity,
+      product.unit
+    );
+  }, [product, currentVariant]);
+
+  // Now we can safely return null after all hooks
   if (!product) return null;
-
-  // Sample quantity options (will be replaced with product.variants)
-  const quantityOptions = product.variants || [
-    {
-      value: '250g',
-      label: '250 gm',
-      price: product.price,
-      originalPrice: product.originalPrice,
-    },
-    {
-      value: '500g',
-      label: '500 gm',
-      price: product.price * 2,
-      originalPrice: product.originalPrice
-        ? product.originalPrice * 2
-        : undefined,
-    },
-    {
-      value: '1kg',
-      label: '1 kg',
-      price: product.price * 4,
-      originalPrice: product.originalPrice
-        ? product.originalPrice * 4
-        : undefined,
-    },
-    {
-      value: '2kg',
-      label: '2 kg',
-      price: product.price * 8,
-      originalPrice: product.originalPrice
-        ? product.originalPrice * 8
-        : undefined,
-    },
-  ];
-
-  const [selectedVariant, setSelectedVariant] = React.useState(
-    quantityOptions[0].value
-  );
-
-  const currentVariant =
-    quantityOptions.find((v) => v.value === selectedVariant) ||
-    quantityOptions[0];
 
   return (
     <Drawer
@@ -91,6 +169,7 @@ export function ProductDetailDrawer({
       position="bottom"
       size={160}
       withCloseButton={false}
+      zIndex={1100}
       styles={{
         body: {
           padding: 0,
@@ -231,21 +310,8 @@ export function ProductDetailDrawer({
                   color: colors.text.primary,
                 }}
               >
-                ₹{currentVariant.price}
+                ₹{currentPrice}
               </Text>
-              {currentVariant.originalPrice && (
-                <Text
-                  size="sm"
-                  variant="secondary"
-                  style={{
-                    textDecoration: 'line-through',
-                    color: colors.text.secondary,
-                    fontSize: '12px',
-                  }}
-                >
-                  ₹{currentVariant.originalPrice}
-                </Text>
-              )}
             </Group>
 
             {/* Quantity Selector and Add Button */}
@@ -289,21 +355,49 @@ export function ProductDetailDrawer({
               />
 
               {/* Add to Cart Button */}
-              <Button
-                size="sm"
+              <Box
+                onClick={() => {
+                  if (!currentVariant) return;
+
+                  const variantUnit = currentVariant.unit || product.unit;
+
+                  addItem({
+                    id: product.id,
+                    name: product.name,
+                    image: product.image,
+                    price: currentPrice,
+                    unit: variantUnit,
+                    productQuantity: currentVariant.label,
+                    orderedQuantity: currentVariant.quantity,
+                    baseQuantity: product.baseQuantity,
+                    basePrice: product.price,
+                    baseUnit: product.unit,
+                    isAvailable: true,
+                    selectedVariant: selectedVariant,
+                  });
+                  onClose();
+                }}
                 style={{
-                  backgroundColor: colors.primary,
-                  color: colors.text.inverse,
-                  fontWeight: typography.fontWeight.semibold,
-                  fontSize: '12px',
-                  height: 28,
-                  paddingLeft: spacing.md,
-                  paddingRight: spacing.md,
-                  borderRadius: radius.sm,
+                  cursor: 'pointer',
                 }}
               >
-                ADD
-              </Button>
+                <Button
+                  size="sm"
+                  style={{
+                    backgroundColor: colors.primary,
+                    color: colors.text.inverse,
+                    fontWeight: typography.fontWeight.semibold,
+                    fontSize: '12px',
+                    height: 28,
+                    paddingLeft: spacing.md,
+                    paddingRight: spacing.md,
+                    borderRadius: radius.sm,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  ADD
+                </Button>
+              </Box>
             </Group>
           </Stack>
         </Group>

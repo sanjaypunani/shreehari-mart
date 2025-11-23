@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Group, Text, Stack, Image, Badge } from '@mantine/core';
-import { IconEye, IconEdit, IconTrash, IconPlus } from '@tabler/icons-react';
+import {
+  IconEye,
+  IconEdit,
+  IconTrash,
+  IconPlus,
+  IconCopy,
+} from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
 import { modals } from '@mantine/modals';
@@ -9,6 +15,7 @@ import {
   useProducts,
   useDeleteProduct,
   useToggleProductAvailability,
+  API_BASE_URL,
 } from '@shreehari/data-access';
 import {
   DataTable,
@@ -123,6 +130,86 @@ export const ProductsPage: React.FC = () => {
 
   const handleAddProduct = () => {
     navigate('/products/new');
+  };
+
+  const handleCopyProductList = async () => {
+    try {
+      // Fetch all available products (no pagination)
+      const response = await fetch(
+        `${API_BASE_URL}/products?isAvailable=true&limit=1000`
+      );
+      const data = await response.json();
+      console.log('Fetched products for copying:', data);
+      const availableProducts = data.data || [];
+
+      if (availableProducts.length === 0) {
+        notifications.show({
+          title: 'No Products',
+          message: 'No available products to copy',
+          color: 'orange',
+        });
+        return;
+      }
+
+      // Get current date in Gujarati format
+      const today = new Date();
+      const day = today.getDate();
+      const months = [
+        'જાન્યુઆરી',
+        'ફેબ્રુઆરી',
+        'માર્ચ',
+        'એપ્રિલ',
+        'મે',
+        'જૂન',
+        'જુલાઈ',
+        'ઓગસ્ટ',
+        'સપ્ટેમ્બર',
+        'ઓક્ટોબર',
+        'નવેમ્બર',
+        'ડિસેમ્બર',
+      ];
+      const month = months[today.getMonth()];
+      const year = today.getFullYear();
+      const dateStr = `${day} ${month} ${year}`;
+
+      // Format product list
+      const productLines = availableProducts
+        .map((product: ProductDto) => {
+          // Extract only Gujarati name (remove English translation in parentheses)
+          const gujaratiName = product.name.split('(')[0].trim();
+          const price = `₹${product.price}`;
+          const quantity = `${product.quantity}${product.unit}`;
+          return `▫️ ${gujaratiName} – ${price} / ${quantity}`;
+        })
+        .join('\n');
+
+      // Create the full formatted text
+      const formattedText = `જય શ્રી કૃષ્ણ • જય સ્વામિનારાયણ 🌸
+
+🥦✨ Shree Hari Mart – તાજા શાકભાજીના ભાવ ✨🥦
+📅 🔴 Updated Price : ${dateStr}  🔴
+
+
+---
+
+${productLines}`;
+
+      // Copy to clipboard
+      await navigator.clipboard.writeText(formattedText);
+
+      notifications.show({
+        title: 'Success',
+        message: `Copied ${availableProducts.length} products to clipboard`,
+        color: 'green',
+      });
+    } catch (error) {
+      console.error('Error copying product list:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to copy product list',
+        color: 'red',
+      });
+    }
   };
 
   const handlePageChange = (newPage: number) => {
@@ -256,6 +343,12 @@ export const ProductsPage: React.FC = () => {
 
   // Define header actions
   const headerActions: PageHeaderAction[] = [
+    {
+      label: 'Copy Product List',
+      variant: 'outline',
+      leftSection: <IconCopy size={16} />,
+      onClick: handleCopyProductList,
+    },
     {
       label: 'Add Product',
       variant: 'brand',

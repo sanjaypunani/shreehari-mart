@@ -108,4 +108,18 @@ export const mantineTheme = createTheme({
   other: {
     colors,
   },
+  components: {
+    Select: {
+      defaultProps: {
+        comboboxProps: {
+          zIndex: 999999,
+        },
+      },
+    },
+    Popover: {
+      defaultProps: {
+        zIndex: 999999,
+      },
+    },
+  },
 });

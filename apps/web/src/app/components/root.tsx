@@ -5,6 +5,9 @@ import { CategoryGrid } from '../../components/home';
 import { ProductGrid, ProductDetailDrawer } from '../../components/products';
 import { spacing } from '../../theme';
 import { useState } from 'react';
+import { useProducts } from '../../hooks/use-api';
+import { ProductDto } from '@shreehari/types';
+import { useCartStore } from '../../store';
 
 // Sample category data (will be replaced with actual data later)
 const categories = [
@@ -58,81 +61,37 @@ const categories = [
   },
 ];
 
-// Sample product data (matching the design from the image)
-const products = [
-  {
-    id: '1',
-    name: 'Hybrid Tomato',
-    image:
-      'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,h_272,w_252/054e83b5ebe789cf4b7b146319df4cfc',
-    price: 21.5,
-    originalPrice: 30,
-    discount: 30,
-    quantity: '1 Bunch x 2',
-    deliveryTime: '7 MINS',
-  },
-  {
-    id: '2',
-    name: 'Green Capsicum (Shimla Mirch)',
-    image:
-      'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,h_272,w_252/b817b4278093e6a7ca0b95496806d6bd',
-    price: 21.5,
-    originalPrice: 30,
-    discount: 30,
-    quantity: '1 Bunch x 2',
-    deliveryTime: '7 MINS',
-  },
-  {
-    id: '3',
-    name: 'Sponge Gourd (Galka)',
-    image:
-      'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,h_272,w_252/wyyq7jq8geayxm5bhfwe',
-    price: 21.5,
-    originalPrice: 30,
-    discount: 30,
-    quantity: '1 Bunch x 2',
-    deliveryTime: '7 MINS',
-  },
-  {
-    id: '4',
-    name: 'Ridge Gourd (Torai)',
-    image:
-      'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,h_272,w_252/NI_CATALOG/IMAGES/CIW/2024/5/31/65b8a182-5d7b-4d2d-93b1-c1f5a0e52d1c_freshvegetables_AHH0F7IKBG_MN.png',
-    price: 21.5,
-    originalPrice: 30,
-    discount: 30,
-    quantity: '1 Bunch x 2',
-    deliveryTime: '7 MINS',
-  },
-  {
-    id: '5',
-    name: 'Carrot (Gajar)',
-    image:
-      'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,h_272,w_252/d00087f08bdd05844c83e1beb6c6b87e',
-    price: 21.5,
-    originalPrice: 30,
-    discount: 30,
-    quantity: '1 Bunch x 2',
-    deliveryTime: '7 MINS',
-  },
-  {
-    id: '6',
-    name: 'Cauliflower',
-    image:
-      'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,h_272,w_252/d09c188edec2c8652bc56594b7ae57af',
-    price: 21.5,
-    originalPrice: 30,
-    discount: 30,
-    quantity: '1 Bunch x 2',
-    deliveryTime: '7 MINS',
-  },
-];
-
 export const HomeRoot = () => {
   const [drawerOpened, setDrawerOpened] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<
-    (typeof products)[0] | undefined
-  >();
+  const [selectedProduct, setSelectedProduct] = useState<any>();
+
+  // Get cart store actions
+  const addItem = useCartStore((state) => state.addItem);
+
+  // Fetch products from API
+  const { data: productsResponse, isLoading } = useProducts({
+    page: 1,
+    limit: 100,
+    isAvailable: true,
+  });
+
+  // Map API response to component format
+  const products = (productsResponse?.data || []).map(
+    (apiProduct: ProductDto) => ({
+      id: apiProduct.id,
+      name: apiProduct.name,
+      image: apiProduct.imageUrl
+        ? // ? `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}${apiProduct.imageUrl}`
+          `${'http://localhost:3000'}${apiProduct.imageUrl}`
+        : 'https://via.placeholder.com/252x272?text=No+Image',
+      price: parseFloat(apiProduct.price.toString()),
+      baseQuantity: apiProduct.quantity,
+      unit: apiProduct.unit,
+      discount: 30, // Mock discount
+      quantity: `${apiProduct.quantity}${apiProduct.unit}`,
+      deliveryTime: '7 MINS', // Mock delivery time
+    })
+  );
 
   const handleCategoryClick = (categoryId: string) => {
     // Will be implemented later with navigation
@@ -146,8 +105,22 @@ export const HomeRoot = () => {
 
   const handleAddToCart = (productId: string) => {
     const product = products.find((p) => p.id === productId);
-    setSelectedProduct(product);
-    setDrawerOpened(true);
+    if (product) {
+      // Add to cart using cart store with base product data
+      addItem({
+        id: product.id,
+        name: product.name,
+        image: product.image,
+        price: product.price,
+        unit: product.unit,
+        productQuantity: product.quantity,
+        orderedQuantity: product.baseQuantity,
+        baseQuantity: product.baseQuantity,
+        basePrice: product.price,
+        baseUnit: product.unit,
+        isAvailable: true,
+      });
+    }
   };
 
   return (

@@ -11,7 +11,6 @@ export interface ProductCardProps {
   name: string;
   image: string;
   price: number;
-  originalPrice?: number;
   discount?: number;
   quantity: string; // e.g., "1 Bunch x 2"
   deliveryTime?: string; // e.g., "7 MINS"
@@ -24,7 +23,6 @@ export function ProductCard({
   name,
   image,
   price,
-  originalPrice,
   discount,
   quantity,
   deliveryTime = '7 MINS',
