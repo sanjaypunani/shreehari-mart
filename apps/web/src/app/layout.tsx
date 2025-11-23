@@ -9,6 +9,8 @@ import { Providers } from './providers';
 export const metadata = {
   title: 'Shreehari Mart - Your One-Stop Shop',
   description: 'Quality products at affordable prices for all your daily needs',
+  manifest: '/manifest.json',
+  themeColor: '#FFFFFF',
 };
 
 export default function RootLayout({

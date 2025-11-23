@@ -14,4 +14,9 @@ const nextConfig = {
 // Compose with explicit base config
 const plugins = [withNx];
 
-module.exports = composePlugins(...plugins)(nextConfig);
+const withPWA = require("@ducanh2912/next-pwa").default({
+  dest: "public",
+  register: true,
+});
+
+module.exports = composePlugins(...plugins)(withPWA(nextConfig));

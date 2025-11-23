@@ -75,7 +75,7 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
       id: apiProduct.id,
       name: apiProduct.name,
       image: apiProduct.imageUrl
-        ? `${'http://localhost:3000'}${apiProduct.imageUrl}`
+        ? `${'https://api.shreeharimartindia.in/'}${apiProduct.imageUrl}`
         : 'https://via.placeholder.com/252x272?text=No+Image',
       price: parseFloat(apiProduct.price.toString()),
       baseQuantity: apiProduct.quantity,

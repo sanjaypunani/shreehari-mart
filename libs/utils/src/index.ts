@@ -65,7 +65,7 @@ export const slugify = (text: string) => {
  */
 export const getImageUrl = (
   imageUrl?: string | null,
-  baseUrl = 'http://localhost:3000',
+  baseUrl = 'https://api.shreeharimartindia.in/',
   fallbackUrl = 'https://via.placeholder.com/150'
 ) => {
   if (!imageUrl) return fallbackUrl;
