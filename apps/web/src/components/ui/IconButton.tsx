@@ -2,6 +2,8 @@ import { ActionIcon, ActionIconProps } from '@mantine/core';
 
 export interface IconButtonProps extends ActionIconProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  component?: any;
+  href?: string;
 }
 
 export function IconButton({ variant = 'primary', ...props }: IconButtonProps) {

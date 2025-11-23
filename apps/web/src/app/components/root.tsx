@@ -1,6 +1,7 @@
 'use client';
 
 import { Container, Stack } from '@mantine/core';
+import { useRouter } from 'next/navigation';
 import { CategoryGrid } from '../../components/home';
 import { ProductGrid, ProductDetailDrawer } from '../../components/products';
 import { spacing } from '../../theme';
@@ -93,8 +94,10 @@ export const HomeRoot = () => {
     })
   );
 
+  const router = useRouter();
+
   const handleCategoryClick = (categoryId: string) => {
-    // Will be implemented later with navigation
+    router.push(`/category/${categoryId}`);
   };
 
   const handleProductClick = (productId: string) => {

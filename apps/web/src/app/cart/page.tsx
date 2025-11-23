@@ -17,6 +17,8 @@ import {
   Badge,
 } from '@mantine/core';
 import { IconChevronLeft, IconPlus } from '@tabler/icons-react';
+import { useDisclosure } from '@mantine/hooks';
+import { LoginBottomSheet } from '../../components/auth/LoginBottomSheet';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '../../store';
 import { colors, spacing, radius, shadow } from '../../theme';
@@ -86,6 +88,7 @@ const DEFAULT_PIECE_OPTIONS = [
 
 export default function CartPage() {
   const router = useRouter();
+  const [loginOpen, { open: openLogin, close: closeLogin }] = useDisclosure(false);
   const { items, totalAmount, savings, updateVariant, removeItem } =
     useCartStore();
 
@@ -172,6 +175,8 @@ export default function CartPage() {
         paddingBottom: 120,
       }}
     >
+      <LoginBottomSheet opened={loginOpen} onClose={closeLogin} returnUrl="/cart" />
+      
       {/* Header */}
       <Paper
         shadow="sm"
@@ -588,10 +593,7 @@ export default function CartPage() {
               fontSize: '16px',
               fontWeight: 600,
             }}
-            onClick={() => {
-              // Navigate to login or checkout
-              console.log('Proceed with phone number');
-            }}
+            onClick={openLogin}
           >
             Proceed with phone number
           </Button>

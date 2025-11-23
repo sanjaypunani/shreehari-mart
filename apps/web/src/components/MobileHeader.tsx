@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Box, Group, Stack, UnstyledButton } from '@mantine/core';
+import Link from 'next/link';
 import { IconMapPin, IconChevronDown, IconUser } from '@tabler/icons-react';
 import { colors, spacing, radius, shadow, typography } from '../theme';
 import { Text, SearchInput, IconButton } from './ui';
@@ -77,6 +78,8 @@ export function MobileHeader() {
 
           {/* Profile Icon */}
           <IconButton
+            component={Link}
+            href="/account"
             variant="ghost"
             size="lg"
             radius="xl"

@@ -4,7 +4,7 @@ import React from 'react';
 import { Box, Stack, Group, ActionIcon } from '@mantine/core';
 import { IconPlus, IconClock } from '@tabler/icons-react';
 import { colors, spacing, radius, shadow, typography } from '../../theme';
-import { Text, Image, Badge, Button } from '../ui';
+import { Text, Image, Badge } from '../ui';
 
 export interface ProductCardProps {
   id: string;
@@ -12,8 +12,8 @@ export interface ProductCardProps {
   image: string;
   price: number;
   discount?: number;
-  quantity: string; // e.g., "1 Bunch x 2"
-  deliveryTime?: string; // e.g., "7 MINS"
+  quantity: string; // e.g., "500 g"
+  deliveryTime?: string; // e.g., "20 MINS"
   onClick?: (id: string) => void;
   onAddToCart?: (id: string) => void;
 }
@@ -25,15 +25,17 @@ export function ProductCard({
   price,
   discount,
   quantity,
-  deliveryTime = '7 MINS',
+  deliveryTime = '20 MINS',
   onClick,
   onAddToCart,
 }: ProductCardProps) {
+  // Calculate original price if discount exists
+  const originalPrice = discount ? Math.round(price / (1 - discount / 100)) : null;
+
   return (
     <Box
       style={{
-        backgroundColor: colors.background,
-        transition: 'all 0.2s ease',
+        backgroundColor: 'white',
         position: 'relative',
         height: '100%',
         display: 'flex',
@@ -41,133 +43,114 @@ export function ProductCard({
         overflow: 'visible',
       }}
     >
-      {/* Product Image Container with Border */}
+      {/* Product Image Container */}
       <Box
         style={{
           width: '100%',
           aspectRatio: '1',
-          backgroundColor: colors.surface,
           position: 'relative',
-          overflow: 'hidden',
-          borderRadius: radius.md,
-          border: `1px solid ${colors.border}`,
-          cursor: 'pointer',
+          marginBottom: spacing.xs,
         }}
         onClick={() => onClick?.(id)}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = shadow.md;
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}
       >
-        {/* Discount Badge - Hidden for now */}
-        {false && (
-          <Box
-            style={{
-              position: 'absolute',
-              top: spacing.xs,
-              left: spacing.xs,
-              zIndex: 10,
-            }}
-          >
-            <Badge
-              variant="success"
-              size="sm"
-              style={{
-                fontWeight: typography.fontWeight.bold,
-                fontSize: '11px',
-                padding: '4px 8px',
-              }}
-            >
-              {discount}% OFF
-            </Badge>
-          </Box>
-        )}
-
-        {/* Add Button */}
-        <Box
-          style={{
-            position: 'absolute',
-            top: -12,
-            right: -12,
-            zIndex: 10,
-          }}
-        >
-          <ActionIcon
-            size={28}
-            radius="50%"
-            variant="filled"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddToCart?.(id);
-            }}
-            style={{
-              backgroundColor: 'white',
-              border: `2px solid ${colors.primary}`,
-              boxShadow: shadow.sm,
-              borderRadius: '50%',
-            }}
-          >
-            <IconPlus size={16} color={colors.primary} strokeWidth={2.5} />
-          </ActionIcon>
-        </Box>
-
-        {/* Product Image */}
         <Image
           src={image}
           alt={name}
           width="100%"
           height="100%"
-          fit="cover"
-          radius={0}
+          fit="contain"
+          radius="md"
           withPlaceholder
         />
+
+        {/* Add Button (Top Right) */}
+        <Box
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            zIndex: 10,
+          }}
+        >
+          <ActionIcon
+            size={32}
+            radius="md"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick?.(id);
+            }}
+            style={{
+              backgroundColor: 'white',
+              borderColor: '#247c62', // Green border
+              color: '#247c62',
+              borderWidth: '1px',
+            }}
+          >
+            <IconPlus size={18} strokeWidth={2.5} />
+          </ActionIcon>
+        </Box>
       </Box>
 
       {/* Product Details */}
-      <Stack gap={0} p={0} pt={spacing.sm} style={{ flexGrow: 1 }}>
+      <Stack gap={4} style={{ flexGrow: 1 }}>
+        {/* Delivery Time */}
+        <Group gap={4} align="center">
+           <IconClock size={10} color={colors.text.secondary} />
+           <Text size="xs" variant="secondary" style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' }}>
+             {deliveryTime}
+           </Text>
+        </Group>
+
         {/* Product Name */}
         <Text
           size="sm"
           fw={typography.fontWeight.semibold}
           variant="primary"
           style={{
-            lineHeight: typography.lineHeight.tight,
-            minHeight: '2.4em',
+            lineHeight: 1.3,
+            minHeight: '2.6em',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
+            fontSize: '13px',
           }}
         >
           {name}
         </Text>
-
-        {/* Quantity Selector */}
-        <Text
-          size="sm"
-          variant="primary"
-          style={{
-            fontWeight: typography.fontWeight.medium,
-          }}
-        >
-          {quantity}
+        
+        {/* Description (Optional - hardcoded for now based on image) */}
+        <Text size="xs" variant="secondary" style={{ fontSize: '10px', lineHeight: 1.2, color: '#888' }}>
+            Fresh, aromatic, detox, garnish for soups & curries
         </Text>
 
-        {/* Price Only - No strikethrough price */}
-        <Text
-          size="lg"
-          fw={typography.fontWeight.bold}
-          variant="primary"
-          style={{
-            color: colors.text.primary,
-          }}
-        >
-          ₹{price}
+        {/* Quantity */}
+        <Text size="xs" variant="secondary" style={{ fontSize: '11px', marginTop: 4 }}>
+            {quantity}
         </Text>
+
+        {/* Price Section */}
+        <Group gap={6} align="center" mt="auto">
+           {/* Discount Percentage */}
+           {discount && (
+               <Text size="xs" style={{ color: '#ff6b00', fontWeight: 700, fontSize: '11px' }}>
+                   {discount}% OFF
+               </Text>
+           )}
+           
+           {/* Current Price */}
+           <Text size="sm" fw={typography.fontWeight.bold} style={{ color: colors.text.primary }}>
+               ₹{price}
+           </Text>
+
+           {/* Original Price */}
+           {originalPrice && (
+               <Text size="xs" style={{ textDecoration: 'line-through', color: colors.text.secondary, fontSize: '11px' }}>
+                   ₹{originalPrice}
+               </Text>
+           )}
+        </Group>
       </Stack>
     </Box>
   );

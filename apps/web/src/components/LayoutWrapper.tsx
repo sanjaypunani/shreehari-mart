@@ -16,8 +16,16 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const [opened, { toggle }] = useDisclosure();
   const pathname = usePathname();
 
-  // Hide CartBar on cart page
-  const shouldShowCartBar = pathname !== '/cart';
+  // Hide CartBar and MobileHeader on specific pages
+  const isAccountPage = pathname === '/account';
+  const isVerifyPage = pathname === '/account/verify';
+  const isCategoryPage = pathname?.startsWith('/category/');
+  const isCartPage = pathname === '/cart';
+  const shouldHideHeader = isAccountPage || isVerifyPage || isCategoryPage || isCartPage;
+  const shouldHideCart = isAccountPage || isVerifyPage; // Cart should be visible on category page
+  
+  const shouldShowCartBar = pathname !== '/cart' && !shouldHideCart;
+  const shouldShowHeader = !shouldHideHeader;
 
   return (
     <AppShell
@@ -26,7 +34,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
       padding={0}
     >
       {/* <AppShell.Header> */}
-      <MobileHeader />
+      {shouldShowHeader && <MobileHeader />}
       {/* </AppShell.Header> */}
 
       <AppShell.Main>
