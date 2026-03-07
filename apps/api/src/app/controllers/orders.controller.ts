@@ -91,10 +91,39 @@ const mapOrderToDto = (order: any): OrderDto => {
   };
 };
 
+const validateOrderItems = (items: CreateOrderItemDto[]) => {
+  for (const [index, item] of items.entries()) {
+    if (!item.productId || !item.unit) {
+      throw createError(
+        `Item ${index + 1} must include productId and unit`,
+        400
+      );
+    }
+
+    if (!['gm', 'kg', 'pc'].includes(item.unit)) {
+      throw createError(
+        `Item ${index + 1} has invalid unit. Use gm, kg, or pc`,
+        400
+      );
+    }
+
+    if (
+      typeof item.orderedQuantity !== 'number' ||
+      !Number.isFinite(item.orderedQuantity) ||
+      item.orderedQuantity <= 0
+    ) {
+      throw createError(
+        `Item ${index + 1} must have orderedQuantity greater than 0`,
+        400
+      );
+    }
+  }
+};
+
 export const getAllOrders = asyncHandler(
   async (req: Request, res: Response) => {
-    const { page, limit, skip } = paginate(req);
-    const { status } = req.query;
+    const { page, limit } = paginate(req);
+    const { status, customerId } = req.query;
 
     try {
       const databaseService = DatabaseService.getInstance();
@@ -104,6 +133,10 @@ export const getAllOrders = asyncHandler(
         page,
         limit,
         status: status as any,
+        customerId:
+          typeof customerId === 'string' && customerId.trim().length > 0
+            ? customerId
+            : undefined,
       });
 
       const ordersDto = orders.map(mapOrderToDto);
@@ -164,18 +197,18 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   const orderData: CreateOrderDto = req.body;
 
   try {
-    // Validate required fields
-    if (
-      !orderData.customerId ||
-      !orderData.items ||
-      orderData.items.length === 0 ||
-      !orderData.deliveryDate
-    ) {
+    if (!orderData.customerId || !orderData.deliveryDate) {
       throw createError(
-        'Customer ID and items and delivery Date are required',
+        'Customer ID, delivery date and order items are required',
         400
       );
     }
+
+    if (!Array.isArray(orderData.items) || orderData.items.length === 0) {
+      throw createError('At least one order item is required', 400);
+    }
+
+    validateOrderItems(orderData.items);
 
     const databaseService = DatabaseService.getInstance();
     const orderRepository = databaseService.getOrderRepository();
@@ -212,9 +245,15 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
     res.status(201).json(response);
   } catch (error) {
     logger.error('Failed to create order', error);
+
+    if ((error as any).statusCode === 400) {
+      throw error;
+    }
+
     if (
       (error as any).message.includes('not found') ||
-      (error as any).message.includes('not available')
+      (error as any).message.includes('not available') ||
+      (error as any).message.includes('Insufficient wallet balance')
     ) {
       throw createError((error as any).message, 400);
     }
@@ -234,23 +273,7 @@ export const updateOrder = asyncHandler(async (req: Request, res: Response) => {
 
     // Check if items are being updated
     if (updateData.items && Array.isArray(updateData.items)) {
-      // Validate items if provided
-      for (const item of updateData.items) {
-        if (!item.productId || !item.orderedQuantity || !item.unit) {
-          throw createError(
-            'Each item must have productId, orderedQuantity, and unit',
-            400
-          );
-        }
-
-        if (!['gm', 'kg', 'pc'].includes(item.unit)) {
-          throw createError('Invalid unit. Must be gm, kg, or pc', 400);
-        }
-
-        if (item.orderedQuantity <= 0) {
-          throw createError('Ordered quantity must be greater than 0', 400);
-        }
-      }
+      validateOrderItems(updateData.items);
 
       // Use the enhanced update method that handles items
       updatedOrder = await orderRepository.updateWithItems(id, updateData);
@@ -275,7 +298,7 @@ export const updateOrder = asyncHandler(async (req: Request, res: Response) => {
     res.json(response);
   } catch (error) {
     logger.error(`Failed to update order ${id}`, error);
-    if ((error as any).statusCode === 404) {
+    if ((error as any).statusCode === 404 || (error as any).statusCode === 400) {
       throw error;
     }
     throw createError('Failed to update order', 500);

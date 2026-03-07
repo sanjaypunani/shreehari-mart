@@ -174,6 +174,7 @@ export function ProductDetailDrawer({
         body: {
           padding: 0,
           height: '160px',
+          paddingBottom: 'var(--safe-area-bottom)',
         },
         content: {
           borderTopLeftRadius: radius.xl,

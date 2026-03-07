@@ -13,10 +13,11 @@ export function MobileHeader() {
       component="header"
       style={{
         backgroundColor: colors.background,
-        // position: 'sticky',
-        // top: 0,
-        // zIndex: 100,
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
         boxShadow: shadow.sm,
+        paddingTop: 'var(--safe-area-top)',
       }}
     >
       <Stack gap={0}>

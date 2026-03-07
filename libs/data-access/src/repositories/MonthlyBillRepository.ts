@@ -9,6 +9,7 @@ interface FindAllOptions {
   month?: string;
   status?: BillStatus;
   search?: string;
+  customerId?: string;
 }
 
 interface FindAllResult {
@@ -31,7 +32,7 @@ export class MonthlyBillRepository {
   }
 
   async findAll(options: FindAllOptions): Promise<FindAllResult> {
-    const { page = 1, limit = 20, month, status, search } = options;
+    const { page = 1, limit = 20, month, status, search, customerId } = options;
     const skip = (page - 1) * limit;
 
     let query = this.monthlyBillRepository
@@ -55,6 +56,10 @@ export class MonthlyBillRepository {
         '(customer.name ILIKE :search OR customer.email ILIKE :search OR bill.billNumber ILIKE :search)',
         { search: `%${search}%` }
       );
+    }
+
+    if (customerId) {
+      query = query.andWhere('bill.customerId = :customerId', { customerId });
     }
 
     // Get total count

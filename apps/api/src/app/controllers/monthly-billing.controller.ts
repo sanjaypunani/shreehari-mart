@@ -23,7 +23,14 @@ export class MonthlyBillingController {
   // GET /api/monthly-bills
   async getMonthlyBills(req: Request, res: Response): Promise<void> {
     try {
-      const { page = 1, limit = 20, month, status, search } = req.query;
+      const {
+        page = 1,
+        limit = 20,
+        month,
+        status,
+        search,
+        customerId,
+      } = req.query;
 
       const result = await this.monthlyBillService.findAll({
         page: Number(page),
@@ -31,6 +38,7 @@ export class MonthlyBillingController {
         month: month as string,
         status: status as any,
         search: search as string,
+        customerId: customerId as string,
       });
 
       const response: ApiResponse<PaginatedResponse<MonthlyBillDto>> = {

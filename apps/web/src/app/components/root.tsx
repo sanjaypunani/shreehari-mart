@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useProducts } from '../../hooks/use-api';
 import { ProductDto } from '@shreehari/types';
 import { useCartStore } from '../../store';
+import { toApiAssetUrl } from '../../config/api';
 
 // Sample category data (will be replaced with actual data later)
 const categories = [
@@ -81,10 +82,7 @@ export const HomeRoot = () => {
     (apiProduct: ProductDto) => ({
       id: apiProduct.id,
       name: apiProduct.name,
-      image: apiProduct.imageUrl
-        ? // ? `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}${apiProduct.imageUrl}`
-          `${'https://api.shreeharimartindia.in/'}${apiProduct.imageUrl}`
-        : 'https://via.placeholder.com/252x272?text=No+Image',
+      image: toApiAssetUrl(apiProduct.imageUrl),
       price: parseFloat(apiProduct.price.toString()),
       baseQuantity: apiProduct.quantity,
       unit: apiProduct.unit,

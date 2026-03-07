@@ -7,6 +7,7 @@
 
 import { CartItem } from '../store';
 import { CreateOrderItemDto } from '@shreehari/types';
+import { calculateOrderItemPrice } from '@shreehari/utils';
 
 /**
  * Convert cart items to order items format for API submission
@@ -40,31 +41,13 @@ export function calculateItemPrice(
   productQuantity: number,
   productUnit: 'gm' | 'kg' | 'pc'
 ): number {
-  // Convert ordered quantity to the same unit as product pricing
-  let normalizedOrderedQuantity: number;
-
-  // Handle unit conversion
-  if (productUnit === 'kg' && unit === 'gm') {
-    // Product is priced per kg, but ordered in grams
-    normalizedOrderedQuantity = orderedQuantity / 1000;
-  } else if (productUnit === 'gm' && unit === 'kg') {
-    // Product is priced per gram, but ordered in kg
-    normalizedOrderedQuantity = orderedQuantity * 1000;
-  } else if (productUnit === unit) {
-    // Same units, no conversion needed
-    normalizedOrderedQuantity = orderedQuantity;
-  } else if (productUnit === 'pc' || unit === 'pc') {
-    // For pieces, use direct quantity
-    normalizedOrderedQuantity = orderedQuantity;
-  } else {
-    // Fallback for any other cases
-    normalizedOrderedQuantity = orderedQuantity;
-  }
-
-  // Calculate price per unit of the product
-  const pricePerUnit = productPrice / productQuantity;
-
-  return parseFloat((normalizedOrderedQuantity * pricePerUnit).toFixed(2));
+  return calculateOrderItemPrice(
+    orderedQuantity,
+    unit,
+    productPrice,
+    productQuantity,
+    productUnit
+  );
 }
 
 /**

@@ -8,6 +8,7 @@ import societiesRouter from './routes/societies.routes';
 import buildingsRouter from './routes/buildings.routes';
 import analyticsRouter from './routes/analytics.routes';
 import monthlyBillingRouter from './routes/monthly-billing.routes';
+import authRouter from './routes/auth.routes';
 import { DatabaseService } from '@shreehari/data-access';
 
 // Simple CORS options
@@ -83,6 +84,7 @@ export const createServer = () => {
   app.use('/api/buildings', buildingsRouter);
   app.use('/api/analytics', analyticsRouter);
   app.use('/api/monthly-billing', monthlyBillingRouter);
+  app.use('/api/auth', authRouter);
 
   // 404 handler
   app.use((req, res) => {

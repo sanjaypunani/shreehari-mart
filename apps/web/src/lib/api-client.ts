@@ -6,12 +6,8 @@
  */
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-
-// API base URL - Update this based on your environment
-// const API_BASE_URL =
-//   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-
-const API_BASE_URL = 'https://api.shreeharimartindia.in//api';
+import { API_BASE_URL } from '../config/api';
+import { useAppStore } from '../store/app-store';
 
 /**
  * Create axios instance with default configuration
@@ -31,8 +27,40 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Add auth token if available
-    const token =
-      typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+    let token: string | null = null;
+
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('authToken');
+
+      // Recover token from persisted Zustand state if direct token key is missing.
+      if (!token) {
+        const persistedStore = localStorage.getItem('shreehari-mart-storage');
+
+        if (persistedStore) {
+          try {
+            const parsedStore = JSON.parse(persistedStore);
+            const persistedToken = parsedStore?.state?.auth?.token;
+
+            if (typeof persistedToken === 'string' && persistedToken.length > 0) {
+              token = persistedToken;
+              localStorage.setItem('authToken', persistedToken);
+            }
+          } catch {
+            // Ignore malformed persisted auth cache.
+          }
+        }
+      }
+
+      // Last fallback: in-memory Zustand state token.
+      if (!token) {
+        const storeToken = useAppStore.getState().auth.token;
+        if (storeToken) {
+          token = storeToken;
+          localStorage.setItem('authToken', storeToken);
+        }
+      }
+    }
+
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -80,10 +108,13 @@ apiClient.interceptors.response.use(
       // Handle specific status codes
       switch (status) {
         case 401:
-          // Unauthorized - clear token and redirect to login
+          // Unauthorized - clear persisted auth state so UI returns to login flow.
           if (typeof window !== 'undefined') {
-            localStorage.removeItem('authToken');
-            // window.location.href = '/login'; // Uncomment when auth is implemented
+            try {
+              useAppStore.getState().logout();
+            } catch {
+              localStorage.removeItem('authToken');
+            }
           }
           break;
         case 403:

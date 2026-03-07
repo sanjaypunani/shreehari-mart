@@ -16,13 +16,17 @@ import {
   ActionIcon,
   Badge,
 } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { IconChevronLeft, IconPlus } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import { LoginBottomSheet } from '../../components/auth/LoginBottomSheet';
 import { useRouter } from 'next/navigation';
-import { useCartStore } from '../../store';
-import { colors, spacing, radius, shadow } from '../../theme';
-import { calculateItemPrice } from '../../utils';
+import { useAppStore, useAuth, useCartStore } from '../../store';
+import { colors, spacing, radius } from '../../theme';
+import { calculateItemPrice, cartItemsToOrderItems } from '../../utils';
+import { useCreateOrder } from '../../hooks/use-api';
+import { authApi } from '../../lib/api/services';
+import { getErrorMessage } from '../../lib/api-client';
 
 // Default quantity variants for weight-based products
 const DEFAULT_WEIGHT_OPTIONS = [
@@ -89,28 +93,120 @@ const DEFAULT_PIECE_OPTIONS = [
 export default function CartPage() {
   const router = useRouter();
   const [loginOpen, { open: openLogin, close: closeLogin }] = useDisclosure(false);
-  const { items, totalAmount, savings, updateVariant, removeItem } =
-    useCartStore();
+  const auth = useAuth();
+  const updateUser = useAppStore((state) => state.updateUser);
+  const { mutateAsync: createOrder, isPending: isCreatingOrder } =
+    useCreateOrder();
+  const [isResolvingCustomerId, setIsResolvingCustomerId] = React.useState(false);
+  const { items, updateVariant, removeItem, clearCart } = useCartStore();
+  const isAuthenticated = auth.isAuthenticated;
+  const isPlacingOrder = isResolvingCustomerId || isCreatingOrder;
 
   // Format currency
   const formatPrice = (price: number) => `₹${Math.round(price)}`;
 
-  // Calculate bill details
-  const itemTotal = totalAmount;
+  // Separate available and unavailable items
+  const availableItems = items.filter((item) => item.isAvailable);
+  const unavailableItems = items.filter((item) => !item.isAvailable);
+
+  // Calculate bill details from only orderable items
+  const itemTotal = availableItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
   const handlingFee = 0;
   const deliveryPartnerFee = 0;
   const toBePaid = itemTotal + handlingFee + deliveryPartnerFee;
 
-  // Separate available and unavailable items
-  const availableItems = items.filter((item) => item.isAvailable);
-  const unavailableItems = items.filter((item) => !item.isAvailable);
+  const getLocalDateString = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const resolveCustomerId = async () => {
+    if (auth.user?.customerId) {
+      return auth.user.customerId;
+    }
+
+    const profile = await authApi.me();
+    const customerId =
+      profile.data?.user?.customerId || profile.data?.customer?.id || null;
+
+    if (customerId) {
+      updateUser({
+        customerId,
+        name: profile.data.user?.name || auth.user?.name,
+        email: profile.data.user?.email ?? auth.user?.email ?? null,
+      });
+    }
+
+    return customerId;
+  };
+
+  const handleCheckout = async () => {
+    if (!isAuthenticated) {
+      openLogin();
+      return;
+    }
+
+    if (availableItems.length === 0) {
+      notifications.show({
+        color: 'red',
+        title: 'No available items',
+        message: 'Please add available products to place your order.',
+      });
+      return;
+    }
+
+    try {
+      setIsResolvingCustomerId(true);
+      const customerId = await resolveCustomerId();
+
+      if (!customerId) {
+        notifications.show({
+          color: 'red',
+          title: 'Profile incomplete',
+          message: 'Please complete your account details before placing order.',
+        });
+        router.push('/account');
+        return;
+      }
+
+      const response = await createOrder({
+        customerId,
+        items: cartItemsToOrderItems(availableItems),
+        deliveryDate: getLocalDateString(),
+      });
+
+      clearCart();
+      notifications.show({
+        color: 'green',
+        title: 'Order placed',
+        message: response?.data?.id
+          ? `Order #${String(response.data.id).slice(0, 8).toUpperCase()} created successfully.`
+          : 'Your order has been placed successfully.',
+      });
+      router.push('/account');
+    } catch (error) {
+      notifications.show({
+        color: 'red',
+        title: 'Failed to place order',
+        message: getErrorMessage(error),
+      });
+    } finally {
+      setIsResolvingCustomerId(false);
+    }
+  };
 
   // If cart is empty, show empty state
   if (items.length === 0) {
     return (
       <Box
         style={{
-          minHeight: '100vh',
+          minHeight: 'var(--app-viewport-height)',
           backgroundColor: colors.surface,
         }}
       >
@@ -170,9 +266,9 @@ export default function CartPage() {
   return (
     <Box
       style={{
-        minHeight: '100vh',
+        minHeight: 'var(--app-viewport-height)',
         backgroundColor: colors.surface,
-        paddingBottom: 120,
+        paddingBottom: 'calc(120px + var(--safe-area-bottom))',
       }}
     >
       <LoginBottomSheet opened={loginOpen} onClose={closeLogin} returnUrl="/cart" />
@@ -561,10 +657,12 @@ export default function CartPage() {
         <Paper p={spacing.lg} radius={0} mt={spacing.sm} mb={spacing.xl}>
           <Stack gap={spacing.sm} align="center">
             <Text size="lg" fw={700} c={colors.text.primary}>
-              Almost There
+              {isAuthenticated ? 'Ready to order' : 'Almost There'}
             </Text>
             <Text size="sm" c={colors.text.secondary} ta="center">
-              Login or Signup to place your order
+              {isAuthenticated
+                ? 'Review your cart and place the order'
+                : 'Login or Signup to place your order'}
             </Text>
           </Stack>
         </Paper>
@@ -581,6 +679,7 @@ export default function CartPage() {
           zIndex: 100,
           backgroundColor: '#ffffff',
           borderTop: `1px solid ${colors.border}`,
+          paddingBottom: 'var(--safe-area-bottom)',
         }}
       >
         <Container size="sm" p={spacing.md}>
@@ -593,9 +692,11 @@ export default function CartPage() {
               fontSize: '16px',
               fontWeight: 600,
             }}
-            onClick={openLogin}
+            onClick={handleCheckout}
+            loading={isPlacingOrder}
+            disabled={isAuthenticated && availableItems.length === 0}
           >
-            Proceed with phone number
+            {isAuthenticated ? 'Place Order' : 'Proceed with phone number'}
           </Button>
         </Container>
       </Paper>

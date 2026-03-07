@@ -11,6 +11,7 @@ import { CategorySidebar } from './CategorySidebar';
 import { useProducts } from '../../hooks/use-api';
 import { ProductDto } from '@shreehari/types';
 import { useCartStore } from '../../store';
+import { toApiAssetUrl } from '../../config/api';
 
 // Mock data for categories (still mock for now as requested only product data to be real)
 const MOCK_CATEGORIES = [
@@ -61,6 +62,7 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
   
   // Get cart store actions
   const addItem = useCartStore((state) => state.addItem);
+  const hasCartItems = useCartStore((state) => state.items.length > 0);
 
   // Fetch products from API
   const { data: productsResponse, isLoading } = useProducts({
@@ -74,9 +76,7 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
     (apiProduct: ProductDto) => ({
       id: apiProduct.id,
       name: apiProduct.name,
-      image: apiProduct.imageUrl
-        ? `${'https://api.shreeharimartindia.in/'}${apiProduct.imageUrl}`
-        : 'https://via.placeholder.com/252x272?text=No+Image',
+      image: toApiAssetUrl(apiProduct.imageUrl),
       price: parseFloat(apiProduct.price.toString()),
       baseQuantity: apiProduct.quantity,
       unit: apiProduct.unit,
@@ -118,7 +118,14 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
   };
 
   return (
-    <Box style={{ backgroundColor: colors.background, height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <Box
+      style={{
+        backgroundColor: colors.background,
+        height: 'var(--app-viewport-height)',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       {/* Header */}
       <Box
         style={{
@@ -169,7 +176,13 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
                     onProductClick={handleProductClick}
                     onAddToCart={handleAddToCart}
                 />
-                <Box h={80} /> {/* Spacer for bottom cart bar */}
+                <Box
+                  h={
+                    hasCartItems
+                      ? 'calc(92px + var(--mobile-bottom-tabs-total-height))'
+                      : 'var(--mobile-bottom-tabs-total-height)'
+                  }
+                />
             </ScrollArea>
         </Box>
       </Box>

@@ -36,6 +36,41 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+export interface AuthCustomerProfile {
+  id: string;
+  name: string;
+  email: string;
+  mobileNumber: string;
+  societyId: string;
+  buildingId: string;
+  flatNumber: string;
+  isMonthlyPayment: boolean;
+  society?: {
+    id: string;
+    name: string;
+  } | null;
+  building?: {
+    id: string;
+    name: string;
+    societyId: string;
+  } | null;
+}
+
+export interface AuthUserProfile {
+  id: string;
+  role: string;
+  mobileNumber: string;
+  email?: string | null;
+  name: string;
+  customerId: string | null;
+}
+
+export interface AuthProfilePayload {
+  requiresSignup: boolean;
+  user: AuthUserProfile;
+  customer: AuthCustomerProfile | null;
+}
+
 /**
  * Products API Service
  */
@@ -180,13 +215,31 @@ export const customersApi = {
     );
     return response.data;
   },
+
+  getWallet: async (id: string) => {
+    const response = await apiClient.get<ApiResponse<any>>(
+      `/customers/${id}/wallet`
+    );
+    return response.data;
+  },
+
+  getWalletTransactions: async (
+    id: string,
+    params?: Pick<PaginationParams, 'page' | 'limit'>
+  ) => {
+    const response = await apiClient.get<ApiResponse<PaginatedResponse<any>>>(
+      `/customers/${id}/wallet/transactions`,
+      { params }
+    );
+    return response.data;
+  },
 };
 
 /**
  * Buildings API Service
  */
 export const buildingsApi = {
-  getAll: async (params?: PaginationParams) => {
+  getAll: async (params?: PaginationParams & { societyId?: string }) => {
     const response = await apiClient.get<PaginatedResponse<any>>('/buildings', {
       params,
     });
@@ -220,36 +273,137 @@ export const buildingsApi = {
 };
 
 /**
+ * Societies API Service
+ */
+export const societiesApi = {
+  getAll: async () => {
+    const response = await apiClient.get<ApiResponse<any[]>>('/societies');
+    return response.data;
+  },
+
+  getById: async (id: string) => {
+    const response = await apiClient.get<ApiResponse<any>>(`/societies/${id}`);
+    return response.data;
+  },
+};
+
+/**
+ * Monthly Billing API Service
+ */
+export const monthlyBillingApi = {
+  getAll: async (
+    params?: PaginationParams & {
+      month?: string;
+      status?: 'draft' | 'sent' | 'paid' | 'overdue';
+      customerId?: string;
+    }
+  ) => {
+    const response = await apiClient.get<ApiResponse<PaginatedResponse<any>>>(
+      '/monthly-billing',
+      { params }
+    );
+    return response.data;
+  },
+
+  getById: async (id: string) => {
+    const response = await apiClient.get<ApiResponse<any>>(
+      `/monthly-billing/${id}`
+    );
+    return response.data;
+  },
+};
+
+/**
  * Auth API Service
  */
 export const authApi = {
-  login: async (credentials: { email: string; password: string }) => {
+  requestOtp: async (data: { mobileNumber: string }) => {
     const response = await apiClient.post<
-      ApiResponse<{ user: any; token: string }>
-    >('/auth/login', credentials);
+      ApiResponse<{
+        requestId: string;
+        mobileNumber: string;
+        expiresAt: string;
+        otp?: string;
+        isRegisteredCustomer: boolean;
+      }>
+    >('/auth/request-otp', data);
     return response.data;
   },
 
-  register: async (data: any) => {
+  verifyOtp: async (data: { mobileNumber: string; otp: string }) => {
     const response = await apiClient.post<
-      ApiResponse<{ user: any; token: string }>
-    >('/auth/register', data);
+      ApiResponse<{
+        token: string;
+        requiresSignup: boolean;
+        user: AuthUserProfile;
+        customer: AuthCustomerProfile | null;
+      }>
+    >('/auth/verify-otp', data);
     return response.data;
   },
 
-  logout: async () => {
-    const response = await apiClient.post<ApiResponse<void>>('/auth/logout');
+  completeSignup: async (data: {
+    name: string;
+    email: string;
+    societyId: string;
+    buildingId: string;
+    flatNumber: string;
+  }) => {
+    const response = await apiClient.post<
+      ApiResponse<{
+        token: string;
+        requiresSignup: boolean;
+        user: AuthUserProfile;
+        customer: AuthCustomerProfile | null;
+      }>
+    >('/auth/complete-signup', data);
     return response.data;
   },
 
   me: async () => {
-    const response = await apiClient.get<ApiResponse<any>>('/auth/me');
+    const response = await apiClient.get<ApiResponse<AuthProfilePayload>>(
+      '/auth/me'
+    );
     return response.data;
   },
 
-  refreshToken: async () => {
-    const response =
-      await apiClient.post<ApiResponse<{ token: string }>>('/auth/refresh');
+  updateProfile: async (data: {
+    name: string;
+    email: string;
+    societyId: string;
+    buildingId: string;
+    flatNumber: string;
+  }) => {
+    const response = await apiClient.put<
+      ApiResponse<{
+        user: AuthUserProfile;
+        customer: AuthCustomerProfile;
+      }>
+    >('/auth/profile', data);
     return response.data;
+  },
+
+  login: async (_credentials: { email: string; password: string }) => {
+    throw new Error(
+      'Password login is not enabled. Please use mobile OTP authentication.'
+    );
+  },
+
+  register: async (_data: any) => {
+    throw new Error(
+      'Registration is not enabled from this flow. Please contact support.'
+    );
+  },
+
+  logout: async () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+    }
+
+    return {
+      success: true,
+      data: undefined,
+      message: 'Logged out successfully',
+    } as ApiResponse<void>;
   },
 };

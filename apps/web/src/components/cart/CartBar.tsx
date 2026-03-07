@@ -82,20 +82,25 @@ const DEFAULT_PIECE_OPTIONS = [
   },
 ];
 
-export const CartBar = () => {
+interface CartBarProps {
+  bottomOffset?: string;
+  withSafeAreaInset?: boolean;
+}
+
+export const CartBar = ({
+  bottomOffset = '0px',
+  withSafeAreaInset = true,
+}: CartBarProps) => {
   const router = useRouter();
   const {
     items,
     totalItems,
-    totalAmount,
     savings,
     isExpanded,
     toggleExpanded,
     updateVariant,
     removeItem,
   } = useCartStore();
-
-  console.log('CartBar render - items:', items);
 
   // Don't show cart if empty
   if (items.length === 0) {
@@ -109,7 +114,7 @@ export const CartBar = () => {
     <Box
       style={{
         position: 'fixed',
-        bottom: 0,
+        bottom: bottomOffset,
         left: 0,
         right: 0,
         zIndex: 1000,
@@ -352,6 +357,9 @@ export const CartBar = () => {
         style={{
           backgroundColor: colors.primary,
           padding: spacing.md,
+          paddingBottom: withSafeAreaInset
+            ? `calc(${spacing.md} + var(--safe-area-bottom))`
+            : spacing.md,
           boxShadow: shadow.lg,
         }}
       >

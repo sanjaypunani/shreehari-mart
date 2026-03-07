@@ -37,6 +37,54 @@ export const formatPercentage = (value: number, decimals = 1) => {
   return `${(value * 100).toFixed(decimals)}%`;
 };
 
+export type QuantityUnit = 'gm' | 'kg' | 'pc';
+
+/**
+ * Normalize ordered quantity to the same unit as product pricing.
+ */
+export const normalizeOrderedQuantity = (
+  orderedQuantity: number,
+  orderedUnit: QuantityUnit,
+  productUnit: QuantityUnit
+) => {
+  if (productUnit === 'kg' && orderedUnit === 'gm') {
+    return orderedQuantity / 1000;
+  }
+
+  if (productUnit === 'gm' && orderedUnit === 'kg') {
+    return orderedQuantity * 1000;
+  }
+
+  if (productUnit === orderedUnit) {
+    return orderedQuantity;
+  }
+
+  if (productUnit === 'pc' || orderedUnit === 'pc') {
+    return orderedQuantity;
+  }
+
+  return orderedQuantity;
+};
+
+/**
+ * Shared order-item pricing calculation used by admin/web/api.
+ */
+export const calculateOrderItemPrice = (
+  orderedQuantity: number,
+  orderedUnit: QuantityUnit,
+  productPrice: number,
+  productQuantity: number,
+  productUnit: QuantityUnit
+) => {
+  const normalizedOrderedQuantity = normalizeOrderedQuantity(
+    orderedQuantity,
+    orderedUnit,
+    productUnit
+  );
+  const pricePerUnit = productPrice / productQuantity;
+  return normalizedOrderedQuantity * pricePerUnit;
+};
+
 export const capitalize = (str: string) => {
   if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -65,14 +113,23 @@ export const slugify = (text: string) => {
  */
 export const getImageUrl = (
   imageUrl?: string | null,
-  baseUrl = 'https://api.shreeharimartindia.in/',
+  baseUrl =
+    (typeof process !== 'undefined' && process.env
+      ? process.env.NEXT_PUBLIC_API_URL || process.env.API_URL
+      : undefined) || 'http://localhost:3000',
   fallbackUrl = 'https://via.placeholder.com/150'
 ) => {
   if (!imageUrl) return fallbackUrl;
   // If imageUrl is already a full URL, return it
   if (imageUrl.startsWith('http')) return imageUrl;
   // Otherwise, prepend the base URL
-  return `${baseUrl}${imageUrl}`;
+  const normalizedBaseUrl = baseUrl
+    .replace(/\/api\/?$/, '')
+    .replace(/\/+$/, '');
+  const normalizedImageUrl = imageUrl.startsWith('/')
+    ? imageUrl
+    : `/${imageUrl}`;
+  return `${normalizedBaseUrl}${normalizedImageUrl}`;
 };
 
 export const generateId = () => {

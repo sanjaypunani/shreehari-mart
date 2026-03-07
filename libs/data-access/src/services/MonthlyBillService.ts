@@ -23,6 +23,7 @@ export class MonthlyBillService {
     month?: string;
     status?: BillStatus;
     search?: string;
+    customerId?: string;
   }): Promise<PaginatedResponse<MonthlyBillDto>> {
     const result = await this.monthlyBillRepository.findAll({
       ...options,

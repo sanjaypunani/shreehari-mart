@@ -12,6 +12,7 @@ export type { Address } from './entities/Address';
 export type { Society } from './entities/Society';
 export type { Building } from './entities/Building';
 export type { Wallet } from './entities/Wallet';
+export type { User, UserRole } from './entities/User';
 export type {
   WalletTransaction,
   WalletTransactionType,
@@ -69,8 +70,21 @@ import {
   BillStatus,
 } from '@shreehari/types';
 
-// const API_BASE_URL = 'https://api.shreeharimartindia.in/api';
-const API_BASE_URL = 'https://api.shreeharimartindia.in//api';
+const getEnv = (key: string) =>
+  typeof process !== 'undefined' && process.env ? process.env[key] : undefined;
+
+const trimTrailingSlash = (value: string) => value.replace(/\/+$/, '');
+
+const configuredApiUrl =
+  getEnv('NEXT_PUBLIC_API_URL') ||
+  getEnv('API_URL') ||
+  'http://localhost:3000/api';
+
+const normalizedApiUrl = trimTrailingSlash(configuredApiUrl);
+
+const API_BASE_URL = normalizedApiUrl.endsWith('/api')
+  ? normalizedApiUrl
+  : `${normalizedApiUrl}/api`;
 
 // Export API_BASE_URL for use in other parts of the application
 export { API_BASE_URL };

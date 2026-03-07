@@ -15,8 +15,10 @@ interface AuthState {
   user: {
     id: string;
     name: string;
-    email: string;
-    role: 'admin' | 'customer';
+    email?: string | null;
+    mobileNumber: string;
+    customerId: string | null;
+    role: 'admin' | 'customer' | 'staff';
   } | null;
   token: string | null;
   isAuthenticated: boolean;

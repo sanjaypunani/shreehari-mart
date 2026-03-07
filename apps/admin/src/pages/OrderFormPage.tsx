@@ -36,6 +36,7 @@ import {
   useOrder,
   useUpdateOrder,
 } from '@shreehari/data-access';
+import { calculateOrderItemPrice } from '@shreehari/utils';
 
 interface OrderItem {
   productId: string;
@@ -116,41 +117,6 @@ export const OrderFormPage: React.FC = () => {
     { value: 'pc', label: 'Pieces' },
   ];
 
-  // Calculate item price based on quantity and unit
-  const calculateItemPrice = (
-    orderedQuantity: number,
-    unit: 'gm' | 'kg' | 'pc',
-    productPrice: number,
-    productQuantity: number,
-    productUnit: 'gm' | 'kg' | 'pc'
-  ): number => {
-    // Convert ordered quantity to the same unit as product pricing
-    let normalizedOrderedQuantity: number;
-
-    // Handle unit conversion
-    if (productUnit === 'kg' && unit === 'gm') {
-      // Product is priced per kg, but ordered in grams
-      normalizedOrderedQuantity = orderedQuantity / 1000;
-    } else if (productUnit === 'gm' && unit === 'kg') {
-      // Product is priced per gram, but ordered in kg
-      normalizedOrderedQuantity = orderedQuantity * 1000;
-    } else if (productUnit === unit) {
-      // Same units, no conversion needed
-      normalizedOrderedQuantity = orderedQuantity;
-    } else if (productUnit === 'pc' || unit === 'pc') {
-      // For pieces, use direct quantity
-      normalizedOrderedQuantity = orderedQuantity;
-    } else {
-      // Fallback for any other cases
-      normalizedOrderedQuantity = orderedQuantity;
-    }
-
-    // Calculate price per unit of the product
-    const pricePerUnit = productPrice / productQuantity;
-
-    return normalizedOrderedQuantity * pricePerUnit;
-  };
-
   // Calculate order totals
   const orderTotals = useMemo(() => {
     let subtotal = 0;
@@ -161,7 +127,7 @@ export const OrderFormPage: React.FC = () => {
         return { item, price: 0 };
       }
 
-      const price = calculateItemPrice(
+      const price = calculateOrderItemPrice(
         item.orderedQuantity,
         item.unit,
         product.price,

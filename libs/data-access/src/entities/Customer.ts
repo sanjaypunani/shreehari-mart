@@ -15,6 +15,7 @@ import { Address } from './Address';
 import { Society } from './Society';
 import { Building } from './Building';
 import { Wallet } from './Wallet';
+import { User } from './User';
 
 @Entity('customers')
 @Index(['email'], { unique: true })
@@ -46,6 +47,9 @@ export class Customer {
   @Column({ type: 'varchar', length: 50 })
   flatNumber!: string;
 
+  @Column({ type: 'uuid', nullable: true, unique: true })
+  userId?: string | null;
+
   @Column({ type: 'boolean', default: false })
   isMonthlyPayment!: boolean;
 
@@ -73,6 +77,10 @@ export class Customer {
 
   @OneToOne(() => Wallet, (wallet) => wallet.customer)
   wallet?: Wallet;
+
+  @OneToOne(() => User, (user) => user.customer, { nullable: true })
+  @JoinColumn({ name: 'userId' })
+  user?: User | null;
 
   // Virtual fields for DTOs
   get totalOrders(): number {

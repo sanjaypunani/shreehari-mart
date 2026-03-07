@@ -36,6 +36,7 @@ if (
     const { Wallet } = require('../entities/Wallet');
     const { WalletTransaction } = require('../entities/WalletTransaction');
     const { MonthlyBill } = require('../entities/MonthlyBill');
+    const { User } = require('../entities/User');
 
     DatabaseConfig = {
       type: 'postgres' as const,
@@ -44,7 +45,7 @@ if (
       username: getEnvVar('DB_USERNAME', 'postgres'),
       password: getEnvVar('DB_PASSWORD', 'password'),
       database: getEnvVar('DB_NAME', 'shreehari_mart'),
-      ssl: { require: true, rejectUnauthorized: false },
+      // ssl: { require: true, rejectUnauthorized: false },
       synchronize: getEnvVar('NODE_ENV', 'development') === 'development',
       // logging: getEnvVar('NODE_ENV', 'development') === 'development',
       logging: false,
@@ -60,6 +61,7 @@ if (
         Wallet,
         WalletTransaction,
         MonthlyBill,
+        User,
       ],
       migrations: ['src/database/migrations/*.ts'],
       subscribers: ['src/database/subscribers/*.ts'],

@@ -1,8 +1,60 @@
+/* ========================================
+   SAFE AREA INSETS FOR MOBILE DEVICES
+   ======================================== */
+
+/* Define CSS custom properties for safe area insets
+   These will automatically adapt to devices with notches/dynamic islands */
+:root {
+  /* Safe area insets - fallback to 0 for devices without notches */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+
+  /* Combined safe area values for convenience */
+  --safe-area-top: var(--safe-area-inset-top);
+  --safe-area-right: var(--safe-area-inset-right);
+  --safe-area-bottom: var(--safe-area-inset-bottom);
+  --safe-area-left: var(--safe-area-inset-left);
+
+  /* Runtime values updated by ViewportInsetsObserver */
+  --app-viewport-height: 100vh;
+  --keyboard-inset-height: 0px;
+  --safe-area-bottom-with-keyboard: calc(
+    var(--safe-area-bottom) + var(--keyboard-inset-height)
+  );
+
+  /* Mobile bottom navigation sizing (enabled via media query below) */
+  --mobile-bottom-tabs-height: 64px;
+  --mobile-bottom-tabs-total-height: 0px;
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --app-viewport-height: 100dvh;
+  }
+}
+
+@media screen and (max-width: 47.99em) {
+  :root {
+    --mobile-bottom-tabs-total-height: calc(
+      var(--mobile-bottom-tabs-height) + var(--safe-area-bottom)
+    );
+  }
+}
+
+/* ========================================
+   GLOBAL RESET
+   ======================================== */
+
 * {
   box-sizing: border-box;
 }
 
 html {
+  /* Ensure the viewport extends into safe areas */
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 
+           env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
   -webkit-text-size-adjust: 100%;
   font-family:
     ui-sans-serif,
@@ -27,6 +79,7 @@ html {
 body {
   font-family: inherit;
   line-height: inherit;
+  min-height: var(--app-viewport-height);
   margin: 0;
   padding: 0;
 }
@@ -499,6 +552,151 @@ summary svg {
   display: inline;
   margin-top: -0.25rem;
 }
+/* ========================================
+   SAFE AREA UTILITY CLASSES
+   ======================================== */
+
+/* Padding utilities */
+.safe-area-padding {
+  padding-top: var(--safe-area-top);
+  padding-right: var(--safe-area-right);
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+}
+
+.safe-area-padding-top {
+  padding-top: var(--safe-area-top);
+}
+
+.safe-area-padding-right {
+  padding-right: var(--safe-area-right);
+}
+
+.safe-area-padding-bottom {
+  padding-bottom: var(--safe-area-bottom);
+}
+
+.safe-area-padding-left {
+  padding-left: var(--safe-area-left);
+}
+
+.safe-area-padding-x {
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
+}
+
+.safe-area-padding-y {
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
+}
+
+/* Margin utilities */
+.safe-area-margin {
+  margin-top: var(--safe-area-top);
+  margin-right: var(--safe-area-right);
+  margin-bottom: var(--safe-area-bottom);
+  margin-left: var(--safe-area-left);
+}
+
+.safe-area-margin-top {
+  margin-top: var(--safe-area-top);
+}
+
+.safe-area-margin-right {
+  margin-right: var(--safe-area-right);
+}
+
+.safe-area-margin-bottom {
+  margin-bottom: var(--safe-area-bottom);
+}
+
+.safe-area-margin-left {
+  margin-left: var(--safe-area-left);
+}
+
+.safe-area-margin-x {
+  margin-left: var(--safe-area-left);
+  margin-right: var(--safe-area-right);
+}
+
+.safe-area-margin-y {
+  margin-top: var(--safe-area-top);
+  margin-bottom: var(--safe-area-bottom);
+}
+
+/* Inset utilities for fixed/absolute positioned elements */
+.safe-area-inset {
+  top: var(--safe-area-top);
+  right: var(--safe-area-right);
+  bottom: var(--safe-area-bottom);
+  left: var(--safe-area-left);
+}
+
+.safe-area-inset-top {
+  top: var(--safe-area-top);
+}
+
+.safe-area-inset-right {
+  right: var(--safe-area-right);
+}
+
+.safe-area-inset-bottom {
+  bottom: var(--safe-area-bottom);
+}
+
+.safe-area-inset-left {
+  left: var(--safe-area-left);
+}
+
+/* Combined padding with additional spacing */
+.safe-area-padding-with-spacing {
+  padding-top: calc(var(--safe-area-top) + 1rem);
+  padding-right: calc(var(--safe-area-right) + 1rem);
+  padding-bottom: calc(var(--safe-area-bottom) + 1rem);
+  padding-left: calc(var(--safe-area-left) + 1rem);
+}
+
+/* For fixed headers */
+.fixed-header-safe {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding-top: var(--safe-area-top);
+  z-index: 1000;
+}
+
+/* For fixed footers/bottom navigation */
+.fixed-footer-safe {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding-bottom: var(--safe-area-bottom);
+  z-index: 1000;
+}
+
+/* For sticky headers */
+.sticky-header-safe {
+  position: sticky;
+  top: var(--safe-area-top);
+  z-index: 100;
+}
+
+/* Minimum height accounting for safe areas */
+.min-h-screen-safe {
+  min-height: calc(
+    var(--app-viewport-height) - var(--safe-area-top) - var(--safe-area-bottom)
+  );
+}
+
+/* Full viewport height accounting for safe areas */
+.h-screen-safe {
+  height: calc(
+    var(--app-viewport-height) - var(--safe-area-top) - var(--safe-area-bottom)
+  );
+}
+
 @media screen and (min-width: 768px) {
   #hero {
     grid-template-columns: repeat(2, minmax(0, 1fr));
