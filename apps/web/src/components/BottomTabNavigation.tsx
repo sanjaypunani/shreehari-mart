@@ -3,17 +3,17 @@
 import React from 'react';
 import Link from 'next/link';
 import { Box, Group, Stack, UnstyledButton } from '@mantine/core';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   IconGridDots,
   IconHome2,
+  IconShoppingBag,
   IconUser,
-  IconWallet,
 } from '@tabler/icons-react';
 import { colors, shadow, typography } from '../theme';
 import { Text } from './ui';
 
-type TabKey = 'home' | 'category' | 'wallet' | 'account';
+type TabKey = 'home' | 'shop' | 'orders' | 'account';
 
 interface BottomTabItem {
   key: TabKey;
@@ -22,17 +22,21 @@ interface BottomTabItem {
   icon: React.ComponentType<{ size?: string | number; color?: string; stroke?: string | number }>;
 }
 
-const getActiveTab = (pathname: string): TabKey => {
-  if (pathname.startsWith('/account/wallet')) {
-    return 'wallet';
+const getActiveTab = (pathname: string, section: string | null): TabKey => {
+  if (pathname.startsWith('/orders')) {
+    return 'orders';
   }
 
   if (pathname.startsWith('/account')) {
+    if (section === 'orders') {
+      return 'orders';
+    }
+
     return 'account';
   }
 
   if (pathname.startsWith('/category/')) {
-    return 'category';
+    return 'shop';
   }
 
   return 'home';
@@ -40,13 +44,14 @@ const getActiveTab = (pathname: string): TabKey => {
 
 export function BottomTabNavigation() {
   const pathname = usePathname() || '/';
-  const activeTab = getActiveTab(pathname);
+  const searchParams = useSearchParams();
+  const activeTab = getActiveTab(pathname, searchParams.get('section'));
   const categoryHref = pathname.startsWith('/category/') ? pathname : '/category/1';
 
   const tabs: BottomTabItem[] = [
     { key: 'home', label: 'Home', href: '/', icon: IconHome2 },
-    { key: 'category', label: 'Category', href: categoryHref, icon: IconGridDots },
-    { key: 'wallet', label: 'Wallet', href: '/account/wallet', icon: IconWallet },
+    { key: 'shop', label: 'Shop', href: categoryHref, icon: IconGridDots },
+    { key: 'orders', label: 'Orders', href: '/account?section=orders', icon: IconShoppingBag },
     { key: 'account', label: 'Account', href: '/account', icon: IconUser },
   ];
 

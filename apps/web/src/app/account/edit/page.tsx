@@ -9,14 +9,18 @@ import {
   Card,
   Group,
   Select,
+  Skeleton,
   Stack,
   TextInput,
+  Textarea,
 } from '@mantine/core';
 import { IconArrowLeft, IconDeviceFloppy } from '@tabler/icons-react';
+import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { useRouter } from 'next/navigation';
 import { colors, radius, spacing, typography } from '../../../theme';
 import { Text } from '../../../components/ui';
+import { LoginBottomSheet } from '../../../components/auth/LoginBottomSheet';
 import {
   authApi,
   buildingsApi,
@@ -30,15 +34,21 @@ interface Option {
   label: string;
 }
 
+const standardCardShadow = '0 4px 12px rgba(0,0,0,0.06)';
+
 export default function EditAccountPage() {
   const router = useRouter();
   const auth = useAuth();
   const updateUser = useAppStore((state) => state.updateUser);
+  const [loginOpen, { open: openLogin, close: closeLogin }] =
+    useDisclosure(false);
 
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [phone, setPhone] = React.useState('');
   const [flatNumber, setFlatNumber] = React.useState('');
+  const [deliveryInstructions, setDeliveryInstructions] = React.useState('');
+  const [customerId, setCustomerId] = React.useState<string | null>(null);
 
   const [societyId, setSocietyId] = React.useState<string | null>(null);
   const [buildingId, setBuildingId] = React.useState<string | null>(null);
@@ -76,12 +86,24 @@ export default function EditAccountPage() {
           return;
         }
 
-        setName(response.data.customer.name || '');
-        setEmail(response.data.customer.email || '');
-        setPhone(response.data.customer.mobileNumber || '');
-        setFlatNumber(response.data.customer.flatNumber || '');
-        setSocietyId(response.data.customer.societyId || null);
-        setBuildingId(response.data.customer.buildingId || null);
+        const loadedCustomer = response.data.customer;
+        const loadedCustomerId = loadedCustomer.id || null;
+        const storageKey = loadedCustomerId
+          ? `deliveryInstructions:${loadedCustomerId}`
+          : null;
+        const storedInstructions =
+          typeof window !== 'undefined' && storageKey
+            ? window.localStorage.getItem(storageKey) || ''
+            : '';
+
+        setName(loadedCustomer.name || '');
+        setEmail(loadedCustomer.email || '');
+        setPhone(loadedCustomer.mobileNumber || '');
+        setFlatNumber(loadedCustomer.flatNumber || '');
+        setSocietyId(loadedCustomer.societyId || null);
+        setBuildingId(loadedCustomer.buildingId || null);
+        setCustomerId(loadedCustomerId);
+        setDeliveryInstructions(storedInstructions);
       } catch (error) {
         if (!cancelled) {
           setErrorMessage(getErrorMessage(error));
@@ -192,6 +214,10 @@ export default function EditAccountPage() {
     !!buildingId &&
     flatNumber.trim().length > 0;
 
+  const handleDiscardAndBack = () => {
+    router.push('/account');
+  };
+
   const handleSave = async () => {
     if (!isFormValid || isSubmitting) {
       return;
@@ -207,7 +233,15 @@ export default function EditAccountPage() {
         societyId: societyId!,
         buildingId: buildingId!,
         flatNumber: flatNumber.trim(),
+        deliveryInstructions: deliveryInstructions.trim(),
       });
+
+      if (typeof window !== 'undefined' && customerId) {
+        window.localStorage.setItem(
+          `deliveryInstructions:${customerId}`,
+          deliveryInstructions.trim()
+        );
+      }
 
       updateUser({
         name: response.data.user.name,
@@ -217,14 +251,14 @@ export default function EditAccountPage() {
       });
 
       notifications.show({
-        title: 'Profile Updated',
-        message: 'Your profile details were updated successfully.',
+        title: 'Success',
+        message: 'Profile updated successfully',
         color: 'green',
       });
 
       router.push('/account');
-    } catch (error) {
-      setErrorMessage(getErrorMessage(error));
+    } catch {
+      setErrorMessage("Couldn't update profile. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -233,11 +267,17 @@ export default function EditAccountPage() {
   return (
     <Box
       pb={`calc(90px + var(--safe-area-bottom))`}
-      style={{ minHeight: '100vh', backgroundColor: '#f2f5f7' }}
+      style={{ minHeight: '100vh', backgroundColor: colors.surface }}
     >
+      <LoginBottomSheet
+        opened={loginOpen}
+        onClose={closeLogin}
+        returnUrl="/account/edit"
+      />
+
       <Box
         px={spacing.md}
-        pb={spacing.lg}
+        pb={spacing.md}
         style={{
           backgroundColor: colors.background,
           borderBottom: `1px solid ${colors.border}`,
@@ -245,7 +285,7 @@ export default function EditAccountPage() {
         }}
       >
         <Group justify="space-between" align="center">
-          <ActionIcon variant="subtle" onClick={() => router.back()}>
+          <ActionIcon variant="subtle" onClick={handleDiscardAndBack}>
             <IconArrowLeft size={22} color={colors.text.primary} />
           </ActionIcon>
           <Text size="lg" fw={typography.fontWeight.bold}>
@@ -265,40 +305,70 @@ export default function EditAccountPage() {
             borderRadius: radius.lg,
             borderColor: colors.border,
             backgroundColor: colors.background,
+            boxShadow: standardCardShadow,
           }}
         >
           <Stack gap={spacing.md}>
             <Text size="sm" fw={typography.fontWeight.bold}>
-              Personal Details
+              Personal Information
             </Text>
 
-            <TextInput
-              label="Full Name"
-              placeholder="Enter your full name"
-              value={name}
-              onChange={(event) => setName(event.currentTarget.value)}
-              disabled={loadingProfile}
-              styles={{ label: { marginBottom: 6 } }}
-            />
+            {loadingProfile ? (
+              <>
+                <Skeleton height={44} radius="md" />
+                <Skeleton height={44} radius="md" />
+                <Skeleton height={20} radius="sm" width="30%" />
+                <Skeleton height={44} radius="md" />
+              </>
+            ) : (
+              <>
+                <TextInput
+                  label="Full Name"
+                  placeholder="Enter your full name"
+                  value={name}
+                  onChange={(event) => setName(event.currentTarget.value)}
+                  disabled={loadingProfile}
+                  styles={{ label: { marginBottom: 6 } }}
+                />
 
-            <TextInput
-              label="Email Address"
-              placeholder="Enter your email address"
-              value={email}
-              onChange={(event) => setEmail(event.currentTarget.value)}
-              disabled={loadingProfile}
-              styles={{ label: { marginBottom: 6 } }}
-            />
+                <TextInput
+                  label="Email Address"
+                  placeholder="Enter your email address"
+                  value={email}
+                  onChange={(event) => setEmail(event.currentTarget.value)}
+                  disabled={loadingProfile}
+                  styles={{ label: { marginBottom: 6 } }}
+                />
 
-            <TextInput
-              label="Phone Number"
-              value={phone ? `+91 ${phone}` : ''}
-              readOnly
-              styles={{
-                label: { marginBottom: 6 },
-                input: { backgroundColor: colors.surface },
-              }}
-            />
+                <Stack gap={6}>
+                  <Text size="sm" fw={typography.fontWeight.medium}>
+                    Phone Number
+                  </Text>
+                  <Group
+                    justify="space-between"
+                    align="center"
+                    style={{
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: radius.md,
+                      padding: `10px ${spacing.sm}`,
+                      minHeight: 44,
+                    }}
+                  >
+                    <Text size="sm" fw={typography.fontWeight.semibold}>
+                      {phone ? `+91 ${phone}` : '+91'}
+                    </Text>
+                    <Button
+                      variant="subtle"
+                      color="blue"
+                      onClick={openLogin}
+                      style={{ minHeight: 44, fontWeight: typography.fontWeight.semibold }}
+                    >
+                      Change Phone
+                    </Button>
+                  </Group>
+                </Stack>
+              </>
+            )}
           </Stack>
         </Card>
 
@@ -309,69 +379,107 @@ export default function EditAccountPage() {
             borderRadius: radius.lg,
             borderColor: colors.border,
             backgroundColor: colors.background,
+            boxShadow: standardCardShadow,
           }}
         >
           <Stack gap={spacing.md}>
             <Text size="sm" fw={typography.fontWeight.bold}>
-              Address Details
+              Delivery Address
             </Text>
 
-            <Select
-              label="Society"
-              placeholder={loadingSocieties ? 'Loading societies...' : 'Select society'}
-              data={societyOptions}
-              value={societyId}
-              onChange={(value) => {
-                setSocietyId(value);
-                setBuildingId(null);
-              }}
-              searchable
-              disabled={loadingSocieties || loadingProfile}
-            />
+            {loadingProfile ? (
+              <>
+                <Skeleton height={44} radius="md" />
+                <Skeleton height={44} radius="md" />
+                <Skeleton height={44} radius="md" />
+                <Skeleton height={92} radius="md" />
+              </>
+            ) : (
+              <>
+                <Select
+                  label="Society"
+                  placeholder={
+                    loadingSocieties ? 'Loading societies...' : 'Select society'
+                  }
+                  data={societyOptions}
+                  value={societyId}
+                  onChange={(value) => {
+                    setSocietyId(value);
+                    setBuildingId(null);
+                  }}
+                  searchable
+                  disabled={loadingSocieties || loadingProfile}
+                />
 
-            <Select
-              label="Building"
-              placeholder={
-                societyId
-                  ? loadingBuildings
-                    ? 'Loading buildings...'
-                    : 'Select building'
-                  : 'Select society first'
-              }
-              data={buildingOptions}
-              value={buildingId}
-              onChange={setBuildingId}
-              searchable
-              disabled={!societyId || loadingBuildings || loadingProfile}
-            />
+                <Select
+                  label="Building"
+                  placeholder={
+                    societyId
+                      ? loadingBuildings
+                        ? 'Loading buildings...'
+                        : 'Select building'
+                      : 'Select society first'
+                  }
+                  data={buildingOptions}
+                  value={buildingId}
+                  onChange={setBuildingId}
+                  searchable
+                  disabled={!societyId || loadingBuildings || loadingProfile}
+                />
 
-            <TextInput
-              label="Flat / House Number"
-              placeholder="e.g. A-302"
-              value={flatNumber}
-              onChange={(event) => setFlatNumber(event.currentTarget.value)}
-              disabled={loadingProfile}
-              styles={{ label: { marginBottom: 6 } }}
-            />
+                <TextInput
+                  label="Flat / House Number"
+                  placeholder="e.g. A-302"
+                  value={flatNumber}
+                  onChange={(event) => setFlatNumber(event.currentTarget.value)}
+                  disabled={loadingProfile}
+                  styles={{ label: { marginBottom: 6 } }}
+                />
+
+                <Textarea
+                  label="Delivery Instructions (Optional)"
+                  placeholder={'Leave at door\nCall when arriving'}
+                  minRows={3}
+                  maxRows={6}
+                  value={deliveryInstructions}
+                  onChange={(event) =>
+                    setDeliveryInstructions(event.currentTarget.value)
+                  }
+                  disabled={loadingProfile}
+                />
+              </>
+            )}
           </Stack>
         </Card>
 
-        <Button
-          fullWidth
-          size="md"
-          leftSection={<IconDeviceFloppy size={18} />}
-          onClick={handleSave}
-          loading={isSubmitting}
-          disabled={!isFormValid || loadingProfile}
-          style={{
-            height: 48,
-            borderRadius: radius.md,
-            backgroundColor: colors.primary,
-            fontWeight: typography.fontWeight.bold,
-          }}
-        >
-          Save Changes
-        </Button>
+        <Group grow>
+          <Button
+            variant="default"
+            onClick={handleDiscardAndBack}
+            style={{
+              minHeight: 44,
+              borderRadius: radius.md,
+              fontWeight: typography.fontWeight.semibold,
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="md"
+            leftSection={<IconDeviceFloppy size={18} />}
+            onClick={handleSave}
+            loading={isSubmitting}
+            disabled={!isFormValid || loadingProfile}
+            style={{
+              minHeight: 44,
+              borderRadius: radius.md,
+              backgroundColor: colors.primary,
+              fontWeight: typography.fontWeight.bold,
+            }}
+          >
+            Update Profile
+          </Button>
+        </Group>
       </Stack>
     </Box>
   );

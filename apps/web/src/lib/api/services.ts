@@ -44,6 +44,7 @@ export interface AuthCustomerProfile {
   societyId: string;
   buildingId: string;
   flatNumber: string;
+  deliveryInstructions?: string | null;
   isMonthlyPayment: boolean;
   society?: {
     id: string;
@@ -373,6 +374,7 @@ export const authApi = {
     societyId: string;
     buildingId: string;
     flatNumber: string;
+    deliveryInstructions?: string;
   }) => {
     const response = await apiClient.put<
       ApiResponse<{
