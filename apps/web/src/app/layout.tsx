@@ -2,14 +2,21 @@ import './global.css';
 import '@mantine/core/styles.css';
 import '@mantine/carousel/styles.css';
 import '@mantine/notifications/styles.css';
-import { ColorSchemeScript, mantineHtmlProps } from '@mantine/core';
+import type { Metadata, Viewport } from 'next';
+import { mantineHtmlProps } from '@mantine/core';
 
 import { Providers } from './providers';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Shreehari Mart - Your One-Stop Shop',
   description: 'Quality products at affordable prices for all your daily needs',
   manifest: '/manifest.json',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
   themeColor: '#FFFFFF',
 };
 
@@ -20,11 +27,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" {...mantineHtmlProps}>
-      <head>
-        <ColorSchemeScript />
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-      </head>
       <body>
         <Providers>{children}</Providers>
       </body>

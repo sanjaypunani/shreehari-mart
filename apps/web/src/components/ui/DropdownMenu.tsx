@@ -1,14 +1,20 @@
-import { Menu, Button, ActionIcon } from '@mantine/core';
+import { Menu, Button } from '@mantine/core';
 import { ReactNode } from 'react';
 
-export interface DropdownMenuItem {
+interface DropdownMenuActionItem {
   label: string;
   icon?: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
   color?: string;
-  divider?: boolean;
+  divider?: false;
 }
+
+interface DropdownMenuDividerItem {
+  divider: true;
+}
+
+export type DropdownMenuItem = DropdownMenuActionItem | DropdownMenuDividerItem;
 
 export interface DropdownMenuProps {
   items: DropdownMenuItem[];
@@ -43,7 +49,7 @@ export function DropdownMenu({
 
       <Menu.Dropdown>
         {items.map((item, index) => {
-          if (item.divider) {
+          if ('divider' in item && item.divider) {
             return <Menu.Divider key={`divider-${index}`} />;
           }
 

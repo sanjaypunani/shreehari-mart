@@ -196,7 +196,7 @@ const statusToneMap: Record<
 const isActiveOrder = (status: AccountOrderStatus) =>
   status === 'pending' || status === 'out_for_delivery';
 
-export default function AccountPage() {
+function AccountPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const auth = useAuth();
@@ -828,6 +828,20 @@ export default function AccountPage() {
         </InfoSection>
       </Stack>
     </Box>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <Box p={spacing.md}>
+          <Text>Loading account...</Text>
+        </Box>
+      }
+    >
+      <AccountPageContent />
+    </React.Suspense>
   );
 }
 

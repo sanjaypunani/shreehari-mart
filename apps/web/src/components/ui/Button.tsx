@@ -1,10 +1,13 @@
 import {
   Button as MantineButton,
   ButtonProps as MantineButtonProps,
+  ElementProps,
 } from '@mantine/core';
 import { colors } from '../../theme/colors';
 
-export interface ButtonProps extends MantineButtonProps {
+export interface ButtonProps
+  extends Omit<MantineButtonProps, 'variant'>,
+    ElementProps<'button', keyof MantineButtonProps> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
 }
 

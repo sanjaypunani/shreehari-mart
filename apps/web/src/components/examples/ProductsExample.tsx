@@ -23,8 +23,8 @@ import {
   useProducts,
   useDeleteProduct,
   useToggleProductAvailability,
-} from '@/hooks/use-api';
-import { useAppStore } from '@/store';
+} from '../../hooks/use-api';
+import { useAppStore } from '../../store';
 
 export default function ProductsExample() {
   const [page, setPage] = useState(1);

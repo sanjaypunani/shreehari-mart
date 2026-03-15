@@ -42,7 +42,7 @@ const getActiveTab = (pathname: string, section: string | null): TabKey => {
   return 'home';
 };
 
-export function BottomTabNavigation() {
+function BottomTabNavigationContent() {
   const pathname = usePathname() || '/';
   const searchParams = useSearchParams();
   const activeTab = getActiveTab(pathname, searchParams.get('section'));
@@ -121,5 +121,13 @@ export function BottomTabNavigation() {
         })}
       </Group>
     </Box>
+  );
+}
+
+export function BottomTabNavigation() {
+  return (
+    <React.Suspense fallback={null}>
+      <BottomTabNavigationContent />
+    </React.Suspense>
   );
 }

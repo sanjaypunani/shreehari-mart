@@ -115,7 +115,7 @@ export const getImageUrl = (
   imageUrl?: string | null,
   baseUrl =
     (typeof process !== 'undefined' && process.env
-      ? process.env.NEXT_PUBLIC_API_URL || process.env.API_URL
+      ? process.env['NEXT_PUBLIC_API_URL'] || process.env['API_URL']
       : undefined) || 'http://localhost:3000',
   fallbackUrl = 'https://via.placeholder.com/150'
 ) => {

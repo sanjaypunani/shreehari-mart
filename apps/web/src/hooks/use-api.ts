@@ -26,13 +26,18 @@ import type {
   ApiResponse,
 } from '../lib/api/services';
 
+type QueryHookOptions<TData> = Omit<
+  UseQueryOptions<TData>,
+  'queryKey' | 'queryFn'
+>;
+
 /**
  * Products Hooks
  */
 
 export const useProducts = (
   params?: PaginationParams & { unit?: string; isAvailable?: boolean },
-  options?: UseQueryOptions<PaginatedResponse<any>>
+  options?: QueryHookOptions<PaginatedResponse<any>>
 ) => {
   return useQuery({
     queryKey: queryKeys.products.list(params),
@@ -43,7 +48,7 @@ export const useProducts = (
 
 export const useProduct = (
   id: string,
-  options?: UseQueryOptions<ApiResponse<any>>
+  options?: QueryHookOptions<ApiResponse<any>>
 ) => {
   return useQuery({
     queryKey: queryKeys.products.detail(id),
@@ -129,7 +134,7 @@ export const useToggleProductAvailability = (
 
 export const useOrders = (
   params?: PaginationParams & { status?: string; customerId?: string },
-  options?: UseQueryOptions<PaginatedResponse<any>>
+  options?: QueryHookOptions<PaginatedResponse<any>>
 ) => {
   return useQuery({
     queryKey: queryKeys.orders.list(params),
@@ -140,7 +145,7 @@ export const useOrders = (
 
 export const useOrder = (
   id: string,
-  options?: UseQueryOptions<ApiResponse<any>>
+  options?: QueryHookOptions<ApiResponse<any>>
 ) => {
   return useQuery({
     queryKey: queryKeys.orders.detail(id),
@@ -212,7 +217,7 @@ export const useUpdateOrderStatus = (
 
 export const useCustomers = (
   params?: PaginationParams,
-  options?: UseQueryOptions<PaginatedResponse<any>>
+  options?: QueryHookOptions<PaginatedResponse<any>>
 ) => {
   return useQuery({
     queryKey: queryKeys.customers.list(params),
@@ -223,7 +228,7 @@ export const useCustomers = (
 
 export const useCustomer = (
   id: string,
-  options?: UseQueryOptions<ApiResponse<any>>
+  options?: QueryHookOptions<ApiResponse<any>>
 ) => {
   return useQuery({
     queryKey: queryKeys.customers.detail(id),
@@ -253,7 +258,7 @@ export const useCreateCustomer = (
 
 export const useBuildings = (
   params?: PaginationParams,
-  options?: UseQueryOptions<PaginatedResponse<any>>
+  options?: QueryHookOptions<PaginatedResponse<any>>
 ) => {
   return useQuery({
     queryKey: queryKeys.buildings.list(params),
@@ -264,7 +269,7 @@ export const useBuildings = (
 
 export const useBuilding = (
   id: string,
-  options?: UseQueryOptions<ApiResponse<any>>
+  options?: QueryHookOptions<ApiResponse<any>>
 ) => {
   return useQuery({
     queryKey: queryKeys.buildings.detail(id),

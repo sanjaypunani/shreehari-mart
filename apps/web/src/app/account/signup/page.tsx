@@ -22,7 +22,7 @@ interface Option {
   label: string;
 }
 
-export default function SignupPage() {
+function SignupPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const login = useAppStore((state) => state.login);
@@ -291,5 +291,19 @@ export default function SignupPage() {
         </Button>
       </Stack>
     </Box>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <Box p={spacing.md}>
+          <Text>Loading signup...</Text>
+        </Box>
+      }
+    >
+      <SignupPageContent />
+    </React.Suspense>
   );
 }
