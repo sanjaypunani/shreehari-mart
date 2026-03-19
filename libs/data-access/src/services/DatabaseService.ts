@@ -5,6 +5,7 @@ import { OrderRepository } from '../repositories/OrderRepository';
 import { SocietyRepository } from '../repositories/SocietyRepository';
 import { BuildingRepository } from '../repositories/BuildingRepository';
 import { WalletRepository } from '../repositories/WalletRepository';
+import { CategoryRepository } from '../repositories/CategoryRepository';
 import { DatabaseConnection } from '../database/connection';
 
 export class DatabaseService {
@@ -16,6 +17,7 @@ export class DatabaseService {
   private societyRepository: SocietyRepository;
   private buildingRepository: BuildingRepository;
   private walletRepository: WalletRepository;
+  private categoryRepository: CategoryRepository;
 
   private constructor() {
     this.productRepository = new ProductRepository();
@@ -25,6 +27,7 @@ export class DatabaseService {
     this.societyRepository = new SocietyRepository();
     this.buildingRepository = new BuildingRepository();
     this.walletRepository = new WalletRepository();
+    this.categoryRepository = new CategoryRepository();
   }
 
   public static getInstance(): DatabaseService {
@@ -67,6 +70,11 @@ export class DatabaseService {
   public getWalletRepository(): WalletRepository {
     this.ensureConnection();
     return this.walletRepository;
+  }
+
+  public getCategoryRepository(): CategoryRepository {
+    this.ensureConnection();
+    return this.categoryRepository;
   }
 
   private ensureConnection(): void {

@@ -18,6 +18,7 @@ export type {
   WalletTransactionType,
 } from './entities/WalletTransaction';
 export type { MonthlyBill } from './entities/MonthlyBill';
+export type { Category } from './entities/Category';
 
 // Re-export database utilities (these will be safe now due to the config.ts changes)
 export { DatabaseConnection } from './database/connection';
@@ -32,6 +33,7 @@ export { SocietyRepository } from './repositories/SocietyRepository';
 export { BuildingRepository } from './repositories/BuildingRepository';
 export { WalletRepository } from './repositories/WalletRepository';
 export { MonthlyBillRepository } from './repositories/MonthlyBillRepository';
+export { CategoryRepository } from './repositories/CategoryRepository';
 
 // Re-export database service
 export { DatabaseService } from './services/DatabaseService';
@@ -68,6 +70,9 @@ import {
   SendInvoiceEmailDto,
   DownloadInvoiceResponseDto,
   BillStatus,
+  CategoryDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
 } from '@shreehari/types';
 
 const getEnv = (key: string) =>
@@ -345,7 +350,8 @@ export const useProducts = (
   limit: number = 10,
   search?: string,
   unit?: string,
-  isAvailable?: boolean
+  isAvailable?: boolean,
+  categoryId?: string
 ) => {
   const [data, setData] = useState<{
     products: ProductDto[];
@@ -370,6 +376,7 @@ export const useProducts = (
         if (unit) queryParams.append('unit', unit);
         if (isAvailable !== undefined)
           queryParams.append('isAvailable', isAvailable.toString());
+        if (categoryId) queryParams.append('categoryId', categoryId);
 
         const response = await apiCall<ProductDto[]>(
           `/products?${queryParams.toString()}`
@@ -390,7 +397,7 @@ export const useProducts = (
     };
 
     fetchProducts();
-  }, [page, limit, search, unit, isAvailable]);
+  }, [page, limit, search, unit, isAvailable, categoryId]);
 
   return { data, loading, error, refetch: () => setLoading(true) };
 };
@@ -1607,4 +1614,194 @@ export const useBulkInvoiceAction = () => {
   };
 
   return { bulkInvoiceAction, loading, error };
+};
+
+// Category API hooks
+export const useCategories = () => {
+  const [data, setData] = useState<CategoryDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refetch = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await apiCall<CategoryDto[]>('/categories');
+      setData(response.data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to fetch categories'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refetch();
+  }, []);
+
+  return { data, loading, error, refetch };
+};
+
+export const useCategory = (id: string) => {
+  const [data, setData] = useState<CategoryDto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await apiCall<CategoryDto>(`/categories/${id}`);
+        setData(response.data);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch category'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchCategory();
+    }
+  }, [id]);
+
+  return { data, loading, error };
+};
+
+export const useCreateCategory = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const createCategory = async (
+    categoryData: CreateCategoryDto,
+    imageFile?: File | null
+  ): Promise<CategoryDto> => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append('name', categoryData.name);
+        if (categoryData.imageUrl) {
+          formData.append('imageUrl', categoryData.imageUrl);
+        }
+        formData.append('image', imageFile);
+
+        const response = await fetch(`${API_BASE_URL}/categories`, {
+          method: 'POST',
+          body: formData,
+          // Don't set Content-Type header, browser will set it with boundary for multipart/form-data
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create category');
+        }
+
+        const result = await response.json();
+        return result.data;
+      } else {
+        const response = await apiCall<CategoryDto>('/categories', {
+          method: 'POST',
+          body: JSON.stringify(categoryData),
+        });
+
+        return response.data;
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to create category';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { createCategory, loading, error };
+};
+
+export const useUpdateCategory = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateCategory = async (
+    id: string,
+    categoryData: UpdateCategoryDto,
+    imageFile?: File | null
+  ): Promise<CategoryDto> => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (imageFile) {
+        const formData = new FormData();
+        if (categoryData.name) formData.append('name', categoryData.name);
+        if (categoryData.imageUrl !== undefined) {
+          formData.append('imageUrl', categoryData.imageUrl || '');
+        }
+        formData.append('image', imageFile);
+
+        const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+          method: 'PUT',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update category');
+        }
+
+        const result = await response.json();
+        return result.data;
+      } else {
+        const response = await apiCall<CategoryDto>(`/categories/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(categoryData),
+        });
+
+        return response.data;
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to update category';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { updateCategory, loading, error };
+};
+
+export const useDeleteCategory = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const deleteCategory = async (id: string): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      await apiCall(`/categories/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to delete category';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { deleteCategory, loading, error };
 };
