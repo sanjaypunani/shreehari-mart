@@ -25,6 +25,13 @@ import type {
   PaginatedResponse,
   ApiResponse,
 } from '../lib/api/services';
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { notifications } from '@mantine/notifications';
+import { useDisclosure } from '@mantine/hooks';
+import { useCartStore } from '../store/cart-store';
+import { calculateItemPrice } from '../utils/index';
+import { toApiAssetUrl } from '../config/api';
 
 type QueryHookOptions<TData> = Omit<
   UseQueryOptions<TData>,
@@ -345,3 +352,175 @@ export const useCurrentUser = (options?: UseQueryOptions<ApiResponse<any>>) => {
     ...options,
   });
 };
+
+/**
+ * Reorder Hook
+ *
+ * Encapsulates the async reorder logic shared across all surfaces
+ * (Account page, Order List page, Order Detail page).
+ *
+ * @param multiOrder - When true, tracks loading per order ID instead of a boolean flag.
+ */
+
+interface ReorderOrderItem {
+  id: string;
+  productId: string;
+  productName: string;
+  orderedQuantity: number;
+  unit: 'gm' | 'kg' | 'pc';
+}
+
+interface ReorderOrder {
+  id: string;
+  items?: ReorderOrderItem[];
+}
+
+export function useReorder(multiOrder?: boolean) {
+  const router = useRouter();
+  const [isReordering, setIsReordering] = React.useState(false);
+  const [reorderingOrderId, setReorderingOrderId] = React.useState<string | null>(null);
+  const [confirmOpen, { open: openConfirm, close: closeConfirm }] = useDisclosure(false);
+  const pendingOrderRef = React.useRef<ReorderOrder | null>(null);
+
+  const executeReorder = async (order: ReorderOrder) => {
+    const validItems = (order.items ?? []).filter((item) => !!item.productId);
+
+    if (validItems.length === 0) {
+      notifications.show({
+        color: 'red',
+        title: 'Unable to reorder',
+        message: 'None of the items could be added. They may be unavailable.',
+        autoClose: 5000,
+      });
+      return;
+    }
+
+    if (multiOrder) {
+      setReorderingOrderId(order.id);
+    } else {
+      setIsReordering(true);
+    }
+
+    try {
+      const results = await Promise.allSettled(
+        validItems.map((item) => productsApi.getById(item.productId))
+      );
+
+      const addedItems: string[] = [];
+      const skippedNames: string[] = [];
+
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          skippedNames.push(validItems[index].productName);
+          return;
+        }
+
+        const rawProduct =
+          (result.value as any)?.data?.data ??
+          (result.value as any)?.data ??
+          result.value;
+
+        if (!rawProduct || rawProduct.isAvailable === false) {
+          skippedNames.push(validItems[index].productName);
+          return;
+        }
+
+        const basePrice = Number(rawProduct.price || 0);
+        const baseQuantity = Number(rawProduct.quantity || 1);
+        const baseUnit = (rawProduct.unit || validItems[index].unit) as 'gm' | 'kg' | 'pc';
+        const orderedQty =
+          Number(validItems[index].orderedQuantity) > 0
+            ? Number(validItems[index].orderedQuantity)
+            : baseQuantity;
+
+        const itemPrice = calculateItemPrice(
+          orderedQty,
+          validItems[index].unit,
+          basePrice,
+          baseQuantity,
+          baseUnit
+        );
+
+        useCartStore.getState().addItem({
+          id: rawProduct.id,
+          name: rawProduct.name,
+          image: toApiAssetUrl(rawProduct.imageUrl),
+          price: itemPrice,
+          quantity: 1,
+          orderedQuantity: orderedQty,
+          unit: validItems[index].unit,
+          productQuantity: `${orderedQty} ${validItems[index].unit}`,
+          baseQuantity,
+          basePrice,
+          baseUnit,
+          isAvailable: true,
+          selectedVariant: `${orderedQty}${validItems[index].unit}`,
+        });
+
+        addedItems.push(rawProduct.name);
+      });
+
+      if (addedItems.length === 0) {
+        notifications.show({
+          color: 'red',
+          title: 'Unable to reorder',
+          message: 'None of the items could be added. They may be unavailable.',
+          autoClose: 5000,
+        });
+        return;
+      }
+
+      if (skippedNames.length > 0) {
+        notifications.show({
+          color: 'yellow',
+          title: 'Some items were unavailable',
+          message: `The following items could not be added: ${skippedNames.join(', ')}.`,
+          autoClose: 6000,
+        });
+      } else {
+        notifications.show({
+          color: 'green',
+          title: 'Added to cart',
+          message: 'Items from this order were added to your cart.',
+          autoClose: 3000,
+        });
+      }
+
+      router.push('/cart');
+    } finally {
+      if (multiOrder) {
+        setReorderingOrderId(null);
+      } else {
+        setIsReordering(false);
+      }
+    }
+  };
+
+  const handleReorder = (order: ReorderOrder) => {
+    if (!order.items?.length || (multiOrder ? !!reorderingOrderId : isReordering)) return;
+    const cartItems = useCartStore.getState().items;
+    if (cartItems.length > 0) {
+      pendingOrderRef.current = order;
+      openConfirm();
+    } else {
+      executeReorder(order);
+    }
+  };
+
+  const handleConfirmReorder = () => {
+    useCartStore.getState().clearCart();
+    if (pendingOrderRef.current) {
+      executeReorder(pendingOrderRef.current);
+      pendingOrderRef.current = null;
+    }
+  };
+
+  return {
+    handleReorder,
+    handleConfirmReorder,
+    isReordering,
+    reorderingOrderId,
+    confirmOpen,
+    closeConfirm,
+  };
+}
