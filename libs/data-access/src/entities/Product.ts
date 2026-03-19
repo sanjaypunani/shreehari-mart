@@ -5,6 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 
 @Entity('products')
@@ -40,6 +42,17 @@ export class Product {
 
   @Column({ type: 'boolean', default: true })
   isAvailable!: boolean;
+
+  @Column({ type: 'uuid', nullable: true })
+  categoryId?: string | null;
+
+  @ManyToOne('Category', 'products', {
+    nullable: true,
+    onDelete: 'SET NULL',
+    eager: false,
+  })
+  @JoinColumn({ name: 'categoryId' })
+  category?: import('./Category').Category | null;
 
   @CreateDateColumn()
   createdAt!: Date;

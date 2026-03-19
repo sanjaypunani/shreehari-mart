@@ -50,6 +50,8 @@ export interface ProductDto {
   description?: string;
   imageUrl?: string;
   isAvailable: boolean;
+  categoryId?: string | null;
+  categoryName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -168,6 +170,7 @@ export interface CreateProductDto {
   unit: 'gm' | 'kg' | 'pc';
   description?: string;
   imageUrl?: string;
+  categoryId?: string | null;
 }
 
 export interface UpdateProductDto extends Partial<CreateProductDto> {
@@ -267,5 +270,22 @@ export interface DownloadInvoiceResponseDto {
   downloadUrl: string;
   filename: string;
 }
+
+// Category DTOs
+export interface CategoryDto {
+  id: string;
+  name: string;
+  imageUrl?: string;
+  productCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCategoryDto {
+  name: string;
+  imageUrl?: string;
+}
+
+export interface UpdateCategoryDto extends Partial<CreateCategoryDto> {}
 
 export type BillStatus = 'draft' | 'sent' | 'paid' | 'overdue';
