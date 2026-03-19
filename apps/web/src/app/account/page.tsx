@@ -16,7 +16,6 @@ import {
   ThemeIcon,
   UnstyledButton,
 } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
 import {
   IconArrowLeft,
   IconCalendarStats,
@@ -32,17 +31,16 @@ import { useDisclosure } from '@mantine/hooks';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { colors, radius, shadow, spacing, typography } from '../../theme';
 import { Text } from '../../components/ui';
+import { ConfirmDialog } from '../../components/ui/Modal';
 import { LoginBottomSheet } from '../../components/auth/LoginBottomSheet';
 import {
   authApi,
   AuthProfilePayload,
   ordersApi,
-  productsApi,
 } from '../../lib/api/services';
 import { getErrorMessage } from '../../lib/api-client';
 import { useAuth, useAppStore } from '../../store/app-store';
-import { useCartStore } from '../../store/cart-store';
-import { toApiAssetUrl } from '../../config/api';
+import { useReorder } from '../../../hooks/use-api';
 
 type AccountOrderStatus =
   | 'pending'
@@ -202,18 +200,22 @@ function AccountPageContent() {
   const auth = useAuth();
   const logout = useAppStore((state) => state.logout);
   const updateUser = useAppStore((state) => state.updateUser);
-  const addItem = useCartStore((state) => state.addItem);
   const [loginOpen, { open: openLogin, close: closeLogin }] =
     useDisclosure(false);
+
+  const {
+    handleReorder,
+    handleConfirmReorder,
+    reorderingOrderId,
+    confirmOpen,
+    closeConfirm,
+  } = useReorder(true);
 
   const [profile, setProfile] = React.useState<AuthProfilePayload | null>(null);
   const [orders, setOrders] = React.useState<AccountOrder[]>([]);
   const [loadingProfile, setLoadingProfile] = React.useState(false);
   const [loadingOrders, setLoadingOrders] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
-  const [reorderingOrderId, setReorderingOrderId] = React.useState<
-    string | null
-  >(null);
 
   React.useEffect(() => {
     if (!auth.isAuthenticated) {
@@ -362,85 +364,6 @@ function AccountPageContent() {
     document
       .getElementById(`order-${activeOrder.id}`)
       ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
-
-  const handleReorder = async (order: AccountOrder) => {
-    if (!order.items?.length || reorderingOrderId) {
-      return;
-    }
-
-    try {
-      setReorderingOrderId(order.id);
-
-      const productResponses = await Promise.allSettled(
-        order.items.map((item) => productsApi.getById(item.productId))
-      );
-
-      const productMap = new Map<string, any>();
-      productResponses.forEach((response, index) => {
-        if (response.status !== 'fulfilled') {
-          return;
-        }
-
-        const item = order.items?.[index];
-        if (!item) {
-          return;
-        }
-
-        const resolvedProduct = (response.value as any)?.data || response.value;
-        productMap.set(item.productId, resolvedProduct);
-      });
-
-      order.items.forEach((item) => {
-        const product = productMap.get(item.productId);
-        const baseUnit = (product?.unit || item.unit) as 'gm' | 'kg' | 'pc';
-        const orderedQuantity =
-          Number(item.orderedQuantity) > 0
-            ? Number(item.orderedQuantity)
-            : Number(product?.quantity || item.baseQuantity || 1);
-        const baseQuantity =
-          Number(product?.quantity || item.baseQuantity || orderedQuantity) || 1;
-        const basePrice = Number(
-          product?.price ||
-            item.pricePerBaseUnit ||
-            item.price ||
-            item.finalPrice ||
-            0
-        );
-
-        addItem({
-          id: item.productId,
-          name: item.productName || product?.name || 'Product',
-          image: toApiAssetUrl(product?.imageUrl),
-          price: basePrice,
-          quantity: 1,
-          orderedQuantity,
-          unit: item.unit,
-          productQuantity: `${orderedQuantity} ${item.unit}`,
-          baseQuantity,
-          basePrice,
-          baseUnit,
-          isAvailable: product?.isAvailable !== false,
-          selectedVariant: `${orderedQuantity}${item.unit}`,
-        });
-      });
-
-      notifications.show({
-        color: 'green',
-        title: 'Added to cart',
-        message: 'Items from this order were added to your cart.',
-      });
-
-      router.push('/cart');
-    } catch (error) {
-      notifications.show({
-        color: 'red',
-        title: 'Unable to reorder',
-        message: getErrorMessage(error),
-      });
-    } finally {
-      setReorderingOrderId(null);
-    }
   };
 
   if (!auth.isAuthenticated) {
@@ -600,6 +523,18 @@ function AccountPageContent() {
           )}
         </Stack>
       </Box>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={closeConfirm}
+        onConfirm={handleConfirmReorder}
+        title="Replace your cart?"
+        message="Your cart has existing items. Do you want to replace them with this order?"
+        confirmText="Replace Cart"
+        cancelText="Cancel"
+        variant="warning"
+        loading={false}
+      />
 
       <Stack px={spacing.md} mt={`calc(${spacing.lg} * -1)`} gap={spacing.md}>
         <Card
@@ -807,8 +742,10 @@ function AccountPageContent() {
                         </Button>
 
                         <Button
+                          aria-label="Reorder items from this order"
                           onClick={() => handleReorder(order)}
                           loading={reorderingOrderId === order.id}
+                          disabled={!order.items?.length}
                           style={{
                             minHeight: 44,
                             borderRadius: radius.md,

@@ -1,14 +1,16 @@
 'use client';
 
 import React from 'react';
-import { ActionIcon, Alert, Box, Card, Divider, Group, Loader, Stack, ThemeIcon } from '@mantine/core';
+import { ActionIcon, Alert, Box, Button, Card, Divider, Group, Loader, Stack, ThemeIcon } from '@mantine/core';
 import { IconArrowLeft, IconReceiptRupee } from '@tabler/icons-react';
 import { useParams, useRouter } from 'next/navigation';
 import { colors, radius, spacing, typography } from '../../../../theme';
 import { Text } from '../../../../components/ui';
+import { ConfirmDialog } from '../../../../components/ui/Modal';
 import { getErrorMessage } from '../../../../lib/api-client';
 import { ordersApi } from '../../../../lib/api/services';
 import { useAuth } from '../../../../store/app-store';
+import { useReorder } from '../../../../hooks/use-api';
 
 type AccountOrderStatus =
   | 'pending'
@@ -20,6 +22,7 @@ type PaymentMode = 'wallet' | 'monthly' | 'cod';
 
 interface AccountOrderItem {
   id: string;
+  productId: string;
   productName: string;
   orderedQuantity: number;
   unit: 'gm' | 'kg' | 'pc';
@@ -169,6 +172,7 @@ const normalizeOrder = (payload: Record<string, unknown>, fallbackId: string) =>
 
     return {
       id: String(resolvedItem.id || `${fallbackId}-${index}`),
+      productId: String(resolvedItem.productId || ''),
       productName: String(resolvedItem.productName || 'Product'),
       orderedQuantity: toNumber(resolvedItem.orderedQuantity || resolvedItem.quantity || 1),
       unit: normalizeUnit(resolvedItem.unit),
@@ -198,6 +202,8 @@ export default function OrderDetailsPage() {
 
   const rawOrderId = params?.id;
   const orderId = Array.isArray(rawOrderId) ? rawOrderId[0] : rawOrderId;
+
+  const { handleReorder, handleConfirmReorder, isReordering, confirmOpen, closeConfirm } = useReorder();
 
   const [order, setOrder] = React.useState<AccountOrder | null>(null);
   const [loading, setLoading] = React.useState(false);
@@ -425,9 +431,39 @@ export default function OrderDetailsPage() {
                 </Group>
               </Stack>
             </Card>
+            {order && (
+              <Button
+                fullWidth
+                size="md"
+                onClick={() => handleReorder(order)}
+                loading={isReordering}
+                disabled={!order.items?.length}
+                aria-label="Reorder items from this order"
+                style={{
+                  minHeight: 44,
+                  borderRadius: radius.md,
+                  backgroundColor: colors.primary,
+                  fontWeight: typography.fontWeight.semibold,
+                }}
+              >
+                Reorder
+              </Button>
+            )}
           </>
         ) : null}
       </Stack>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={closeConfirm}
+        onConfirm={handleConfirmReorder}
+        title="Replace your cart?"
+        message="Your cart has existing items. Do you want to replace them with this order?"
+        confirmText="Replace Cart"
+        cancelText="Cancel"
+        variant="warning"
+        loading={false}
+      />
     </Box>
   );
 }
