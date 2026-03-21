@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
-import { Group, Text, Stack, Image, Badge } from '@mantine/core';
-import { IconEdit, IconTrash, IconPlus } from '@tabler/icons-react';
+import { Text, Stack } from '@mantine/core';
+import { IconPlus } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { notifications } from '@mantine/notifications';
 import { modals } from '@mantine/modals';
-import { CategoryDto } from '@shreehari/types';
-import { useCategories, useDeleteCategory } from '@shreehari/data-access';
+import { notifications } from '@mantine/notifications';
+import type { CategoryDto } from '@shreehari/types';
 import {
-  DataTable,
+  useCategories,
+  useDeleteCategory,
+  useReorderCategories,
+} from '@shreehari/data-access';
+import {
   PageHeader,
   SearchFilter,
-  type Column,
-  type DataTableAction,
   type PageHeaderAction,
 } from '@shreehari/ui';
-import { getImageUrl } from '@shreehari/utils';
+import { DnDStatusBanner } from '../components/categories/DnDStatusBanner';
+import { SortableCategoryList } from '../components/categories/SortableCategoryList';
 
 export const CategoriesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,11 +31,15 @@ export const CategoriesPage: React.FC = () => {
     refetch,
   } = useCategories();
   const { deleteCategory, loading: deleteLoading } = useDeleteCategory();
+  const { reorderCategories, loading: reorderLoading } = useReorderCategories();
 
   // Client-side filtering by name
   const filteredCategories = (categoriesData ?? []).filter((cat) =>
     cat.name.toLowerCase().includes(searchValue.toLowerCase())
   );
+
+  // DnD is disabled when search is active
+  const isDndDisabled = searchValue.trim() !== '';
 
   const handleDeleteCategory = (category: CategoryDto) => {
     modals.openConfirmModal({
@@ -67,63 +73,10 @@ export const CategoriesPage: React.FC = () => {
     });
   };
 
-  // Define columns for the DataTable
-  const columns: Column<CategoryDto>[] = [
-    {
-      key: 'imageUrl',
-      title: 'Image',
-      render: (value) => (
-        <Image
-          src={getImageUrl(value)}
-          w={48}
-          h={48}
-          radius="sm"
-          fallbackSrc="https://via.placeholder.com/48"
-        />
-      ),
-    },
-    {
-      key: 'name',
-      title: 'Name',
-      render: (value) => (
-        <Text size="sm" fw={500}>
-          {value}
-        </Text>
-      ),
-    },
-    {
-      key: 'productCount',
-      title: 'Products',
-      render: (value) => (
-        <Badge variant="outline">{value ?? 0}</Badge>
-      ),
-    },
-    {
-      key: 'createdAt',
-      title: 'Created At',
-      render: (value) => (
-        <Text size="sm" c="dimmed">
-          {new Date(value).toLocaleDateString('en-IN')}
-        </Text>
-      ),
-    },
-  ];
-
-  // Define actions for the DataTable
-  const actions: DataTableAction<CategoryDto>[] = [
-    {
-      icon: <IconEdit size={16} />,
-      label: 'Edit',
-      color: 'gray',
-      onClick: (category) => navigate(`/categories/${category.id}/edit`),
-    },
-    {
-      icon: <IconTrash size={16} />,
-      label: 'Delete',
-      color: 'red',
-      onClick: handleDeleteCategory,
-    },
-  ];
+  const handleReorder = async (ids: string[]) => {
+    await reorderCategories({ ids });
+    refetch();
+  };
 
   // Define header actions
   const headerActions: PageHeaderAction[] = [
@@ -168,12 +121,15 @@ export const CategoriesPage: React.FC = () => {
         onToggleFilters={setFiltersExpanded}
       />
 
-      <DataTable
-        data={filteredCategories}
-        columns={columns}
-        actions={actions}
-        loading={loading || deleteLoading}
-        emptyMessage="No categories found"
+      <DnDStatusBanner visible={isDndDisabled} />
+
+      <SortableCategoryList
+        categories={filteredCategories}
+        onReorder={handleReorder}
+        loading={loading || deleteLoading || reorderLoading}
+        isDndDisabled={isDndDisabled}
+        onEdit={(id) => navigate(`/categories/${id}/edit`)}
+        onDelete={handleDeleteCategory}
       />
     </Stack>
   );
