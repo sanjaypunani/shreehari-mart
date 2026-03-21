@@ -1,8 +1,11 @@
 import { Router } from 'express';
-import { DatabaseService } from '@shreehari/data-access';
+import { DatabaseService, ReorderValidationError } from '@shreehari/data-access';
 import { categoryUpload } from '../middleware/upload.middleware';
 
 const router = Router();
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Get all categories
 router.get('/', async (req, res) => {
@@ -21,6 +24,50 @@ router.get('/', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch categories',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+// PATCH /api/categories/reorder
+router.patch('/reorder', async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    // Validate: ids must be a non-empty array
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Request body must contain a non-empty "ids" array.',
+      });
+    }
+
+    // Validate: every element must be a valid UUID string
+    if (!ids.every((id) => typeof id === 'string' && UUID_REGEX.test(id))) {
+      return res.status(400).json({
+        success: false,
+        message: 'All elements of "ids" must be valid UUID strings.',
+      });
+    }
+
+    const dbService = DatabaseService.getInstance();
+    const categoryRepo = dbService.getCategoryRepository();
+
+    await categoryRepo.reorder(ids);
+
+    res.json({ success: true });
+  } catch (error) {
+    if (error instanceof ReorderValidationError) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    console.error('Error reordering categories:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reorder categories',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }

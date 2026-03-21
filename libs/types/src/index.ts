@@ -275,8 +275,9 @@ export interface DownloadInvoiceResponseDto {
 export interface CategoryDto {
   id: string;
   name: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
   productCount?: number;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -287,5 +288,9 @@ export interface CreateCategoryDto {
 }
 
 export interface UpdateCategoryDto extends Partial<CreateCategoryDto> {}
+
+export interface ReorderCategoriesDto {
+  ids: string[];
+}
 
 export type BillStatus = 'draft' | 'sent' | 'paid' | 'overdue';

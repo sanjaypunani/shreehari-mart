@@ -33,7 +33,7 @@ export { SocietyRepository } from './repositories/SocietyRepository';
 export { BuildingRepository } from './repositories/BuildingRepository';
 export { WalletRepository } from './repositories/WalletRepository';
 export { MonthlyBillRepository } from './repositories/MonthlyBillRepository';
-export { CategoryRepository } from './repositories/CategoryRepository';
+export { CategoryRepository, ReorderValidationError } from './repositories/CategoryRepository';
 
 // Re-export database service
 export { DatabaseService } from './services/DatabaseService';
@@ -73,6 +73,7 @@ import {
   CategoryDto,
   CreateCategoryDto,
   UpdateCategoryDto,
+  ReorderCategoriesDto,
 } from '@shreehari/types';
 
 const getEnv = (key: string) =>
@@ -1804,4 +1805,39 @@ export const useDeleteCategory = () => {
   };
 
   return { deleteCategory, loading, error };
+};
+
+export const useReorderCategories = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const reorderCategories = async (
+    dto: ReorderCategoriesDto
+  ): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Use raw fetch (not apiCall) to read the JSON body message for
+      // 400 vs 500 toast discrimination in the admin UI.
+      const response = await fetch(`${API_BASE_URL}/categories/reorder`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dto),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.message ?? 'Failed to reorder categories');
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to reorder categories';
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { reorderCategories, loading, error };
 };
