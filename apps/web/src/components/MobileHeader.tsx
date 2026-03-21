@@ -2,12 +2,16 @@
 
 import React from 'react';
 import { Box, Group, Stack, UnstyledButton } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import Link from 'next/link';
 import { IconMapPin, IconChevronDown, IconUser } from '@tabler/icons-react';
 import { colors, spacing, radius, shadow, typography } from '../theme';
 import { Text, SearchInput, IconButton } from './ui';
+import { ProductSearchDialog } from './search';
 
 export function MobileHeader() {
+  const [searchOpened, { open: openSearch, close: closeSearch }] = useDisclosure(false);
+
   return (
     <Box
       component="header"
@@ -96,9 +100,18 @@ export function MobileHeader() {
 
         {/* Search Section */}
         <Box px={spacing.md} py={spacing.sm}>
-          <SearchInput placeholder='Search for "Grapes"' size="md" />
+          <UnstyledButton style={{ width: '100%', display: 'block' }} onClick={openSearch}>
+            <SearchInput
+              placeholder='Search for "Grapes"'
+              size="md"
+              readOnly
+              style={{ pointerEvents: 'none' }}
+            />
+          </UnstyledButton>
         </Box>
       </Stack>
+
+      <ProductSearchDialog opened={searchOpened} onClose={closeSearch} />
     </Box>
   );
 }

@@ -9,6 +9,7 @@ import { colors, spacing, typography } from '../../theme';
 import { Text } from '../ui';
 import { ProductGrid, ProductDetailDrawer } from '../products';
 import { CategorySidebar } from './CategorySidebar';
+import { ProductSearchDialog } from '../search';
 import { useProducts, useCategory, useCategories } from '../../hooks/use-api';
 import { ProductDto } from '@shreehari/types';
 import { useCartStore } from '../../store';
@@ -185,10 +186,7 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
         product={selectedProduct}
       />
 
-      {/* ProductSearchDialog will be mounted here once Task 7 creates the component */}
-      {/* {searchOpened && (
-        <ProductSearchDialog opened={searchOpened} onClose={closeSearch} />
-      )} */}
+      <ProductSearchDialog opened={searchOpened} onClose={closeSearch} />
     </Box>
   );
 }
