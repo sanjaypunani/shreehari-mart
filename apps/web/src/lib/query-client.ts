@@ -87,5 +87,15 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.buildings.details(), id] as const,
   },
 
+  // Categories
+  categories: {
+    all: ['categories'] as const,
+    lists: () => [...queryKeys.categories.all, 'list'] as const,
+    list: (filters?: Record<string, any>) =>
+      [...queryKeys.categories.lists(), filters] as const,
+    details: () => [...queryKeys.categories.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.categories.details(), id] as const,
+  },
+
   // Add more query keys as needed...
 } as const;

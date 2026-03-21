@@ -80,7 +80,7 @@ export const productsApi = {
    * Get all products with pagination and filters
    */
   getAll: async (
-    params?: PaginationParams & { unit?: string; isAvailable?: boolean }
+    params?: PaginationParams & { unit?: string; isAvailable?: boolean; categoryId?: string }
   ) => {
     const response = await apiClient.get<PaginatedResponse<any>>('/products', {
       params,
@@ -132,6 +132,21 @@ export const productsApi = {
     const response = await apiClient.patch<ApiResponse<any>>(
       `/products/${id}/availability`
     );
+    return response.data;
+  },
+};
+
+/**
+ * Categories API Service
+ */
+export const categoriesApi = {
+  getAll: async () => {
+    const response = await apiClient.get<ApiResponse<any[]>>('/categories');
+    return response.data;
+  },
+
+  getById: async (id: string) => {
+    const response = await apiClient.get<ApiResponse<any>>(`/categories/${id}`);
     return response.data;
   },
 };

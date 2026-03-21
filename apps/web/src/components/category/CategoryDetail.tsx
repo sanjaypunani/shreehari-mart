@@ -1,56 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Box, Group, ActionIcon, Container, ScrollArea, Chip } from '@mantine/core';
+import { Box, Group, ActionIcon, ScrollArea, Skeleton, SimpleGrid } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { IconArrowLeft, IconSearch } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
-import { colors, spacing, typography, shadow } from '../../theme';
+import { colors, spacing, typography } from '../../theme';
 import { Text } from '../ui';
 import { ProductGrid, ProductDetailDrawer } from '../products';
 import { CategorySidebar } from './CategorySidebar';
-import { useProducts } from '../../hooks/use-api';
+import { useProducts, useCategory, useCategories } from '../../hooks/use-api';
 import { ProductDto } from '@shreehari/types';
 import { useCartStore } from '../../store';
 import { toApiAssetUrl } from '../../config/api';
-
-// Mock data for categories (still mock for now as requested only product data to be real)
-const MOCK_CATEGORIES = [
-  {
-    id: '1',
-    name: 'Fresh Vegetables',
-    image: 'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_200/NI_CATALOG/IMAGES/CIW/2025/10/8/323b2564-9fa9-43dd-9755-b5df299797d7_a7f60fc5-47fa-429d-9fd1-5f0644c0d4e3',
-  },
-  {
-    id: '2',
-    name: 'Fresh Fruits',
-    image: 'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_200/NI_CATALOG/IMAGES/CIW/2025/10/8/7155c5af-2f9d-41a3-92d6-2a0d7ecacd4f_361de9d0-8257-4479-8511-76f4f1cd2009',
-  },
-  {
-    id: '3',
-    name: 'Dairy, Bread & Eggs',
-    image: 'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_200/NI_CATALOG/IMAGES/CIW/2025/10/8/8dd93fdd-86da-4f10-8a54-00d3a492943b_ab94b702-a269-48ca-8745-374c4abc5bfd',
-  },
-  {
-    id: '4',
-    name: 'Cereals & Breakfast',
-    image: 'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_200/NI_CATALOG/IMAGES/CIW/2025/10/8/ced37aab-86bf-4092-aed3-75886c3d4a85_7ed42876-2cad-4d5d-97ad-0f1ce41527dd',
-  },
-  {
-    id: '5',
-    name: 'Atta, Rice & Dal',
-    image: 'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_200/NI_CATALOG/IMAGES/CIW/2025/10/8/2afc6eba-1e60-423e-b7e7-135ae4541678_c2e7269b-0f77-4d0e-a9f3-e4f814f7e019',
-  },
-  {
-    id: '6',
-    name: 'Oils & Ghee',
-    image: 'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_200/NI_CATALOG/IMAGES/CIW/2025/10/8/0a5352d0-bd01-4d79-914c-366d638e518c_62bca63e-5d11-45c0-a0a9-629400edfdb6',
-  },
-  {
-    id: '7',
-    name: 'Masalas',
-    image: 'https://instamart-media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_200/NI_CATALOG/IMAGES/CIW/2025/10/8/4695912b-bf51-4eed-8f75-0e403cec103e_d69a8e15-1b69-4460-acca-ec043fabe830',
-  },
-];
 
 export interface CategoryDetailProps {
   categoryId: string;
@@ -58,17 +20,25 @@ export interface CategoryDetailProps {
 
 export function CategoryDetail({ categoryId }: CategoryDetailProps) {
   const router = useRouter();
-  const [selectedCategory, setSelectedCategory] = useState(categoryId || '1');
-  
+  const [selectedCategory, setSelectedCategory] = useState(categoryId);
+
   // Get cart store actions
   const addItem = useCartStore((state) => state.addItem);
   const hasCartItems = useCartStore((state) => state.items.length > 0);
 
-  // Fetch products from API
+  // Fetch current category and all categories from API
+  const { data: categoryResponse, isLoading: categoryLoading } = useCategory(selectedCategory);
+  const { data: allCategoriesResponse } = useCategories();
+  const [searchOpened, { open: openSearch, close: closeSearch }] = useDisclosure(false);
+
+  const categoryName = categoryResponse?.data?.name ?? 'Category';
+
+  // Fetch products filtered by category
   const { data: productsResponse, isLoading } = useProducts({
     page: 1,
-    limit: 100,
+    limit: 200,
     isAvailable: true,
+    categoryId: selectedCategory,
   });
 
   // Map API response to component format
@@ -86,7 +56,11 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
     })
   );
 
-  const categoryName = MOCK_CATEGORIES.find(c => c.id === selectedCategory)?.name || 'Category';
+  const sidebarCategories = (allCategoriesResponse?.data ?? []).map((cat: any) => ({
+    id: cat.id,
+    name: cat.name,
+    image: toApiAssetUrl(cat.imageUrl),
+  }));
 
   const handleAddToCart = (productId: string) => {
     const product = products.find((p) => p.id === productId);
@@ -106,6 +80,11 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
         isAvailable: true,
       });
     }
+  };
+
+  const handleSidebarCategorySelect = (newCategoryId: string) => {
+    setSelectedCategory(newCategoryId);
+    router.replace(`/category/${newCategoryId}`);
   };
 
   const [drawerOpened, setDrawerOpened] = useState(false);
@@ -146,11 +125,16 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
               <IconArrowLeft size={24} />
             </ActionIcon>
             <Text size="lg" fw={typography.fontWeight.bold} variant="primary">
-              {categoryName}
+              {categoryLoading ? <Skeleton height={20} width={120} /> : categoryName}
             </Text>
           </Group>
           
-          <ActionIcon variant="transparent" color="dark">
+          <ActionIcon
+            variant="transparent"
+            color="dark"
+            onClick={openSearch}
+            aria-label="Search products"
+          >
             <IconSearch size={24} />
           </ActionIcon>
         </Group>
@@ -159,23 +143,31 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
       {/* Main Content Area */}
       <Box style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Sidebar */}
-        <CategorySidebar 
-            categories={MOCK_CATEGORIES} 
-            selectedCategoryId={selectedCategory}
-            onSelectCategory={setSelectedCategory}
+        <CategorySidebar
+          categories={sidebarCategories}
+          selectedCategoryId={selectedCategory}
+          onSelectCategory={handleSidebarCategorySelect}
         />
 
         {/* Product Area */}
         <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'white' }}>
             {/* Product Grid */}
             <ScrollArea style={{ flex: 1 }} p={spacing.sm}>
-                <ProductGrid
-                    title="" // No title needed inside the grid as header has it
+                {isLoading ? (
+                  <SimpleGrid cols={{ base: 2, sm: 2, md: 3, lg: 4 }} spacing={spacing.sm} p={spacing.sm}>
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <Skeleton key={i} height={200} radius="md" />
+                    ))}
+                  </SimpleGrid>
+                ) : (
+                  <ProductGrid
+                    title=""
                     products={products}
-                    columns={{ base: 2, xs: 2, sm: 2, md: 3, lg: 4 }} // 2 columns on mobile/base
+                    columns={{ base: 2, xs: 2, sm: 2, md: 3, lg: 4 }}
                     onProductClick={handleProductClick}
                     onAddToCart={handleAddToCart}
-                />
+                  />
+                )}
                 <Box
                   h={
                     hasCartItems
@@ -192,6 +184,11 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
         onClose={() => setDrawerOpened(false)}
         product={selectedProduct}
       />
+
+      {/* ProductSearchDialog will be mounted here once Task 7 creates the component */}
+      {/* {searchOpened && (
+        <ProductSearchDialog opened={searchOpened} onClose={closeSearch} />
+      )} */}
     </Box>
   );
 }

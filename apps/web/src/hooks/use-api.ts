@@ -19,6 +19,7 @@ import {
   customersApi,
   buildingsApi,
   authApi,
+  categoriesApi,
 } from '../lib/api/services';
 import type {
   PaginationParams,
@@ -43,7 +44,7 @@ type QueryHookOptions<TData> = Omit<
  */
 
 export const useProducts = (
-  params?: PaginationParams & { unit?: string; isAvailable?: boolean },
+  params?: PaginationParams & { unit?: string; isAvailable?: boolean; categoryId?: string },
   options?: QueryHookOptions<PaginatedResponse<any>>
 ) => {
   return useQuery({
@@ -131,6 +132,32 @@ export const useToggleProductAvailability = (
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.products.lists() });
     },
+    ...options,
+  });
+};
+
+/**
+ * Categories Hooks
+ */
+
+export const useCategories = (
+  options?: QueryHookOptions<ApiResponse<any[]>>
+) => {
+  return useQuery({
+    queryKey: queryKeys.categories.lists(),
+    queryFn: () => categoriesApi.getAll(),
+    ...options,
+  });
+};
+
+export const useCategory = (
+  id: string,
+  options?: QueryHookOptions<ApiResponse<any>>
+) => {
+  return useQuery({
+    queryKey: queryKeys.categories.detail(id),
+    queryFn: () => categoriesApi.getById(id),
+    enabled: !!id,
     ...options,
   });
 };
