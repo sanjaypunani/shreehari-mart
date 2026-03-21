@@ -15,9 +15,12 @@ export class ProductRepository {
     search?: string;
     unit?: string;
     isAvailable?: boolean;
+    categoryId?: string;
   }): Promise<{ products: Product[]; total: number }> {
-    const { page = 1, limit = 10, search, unit, isAvailable } = options || {};
-    const queryBuilder = this.repository.createQueryBuilder('product');
+    const { page = 1, limit = 10, search, unit, isAvailable, categoryId } = options || {};
+    const queryBuilder = this.repository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category');
     console.log('search', search);
     if (search) {
       queryBuilder.andWhere(
@@ -34,6 +37,10 @@ export class ProductRepository {
       queryBuilder.andWhere('product.isAvailable = :isAvailable', {
         isAvailable,
       });
+    }
+
+    if (categoryId) {
+      queryBuilder.andWhere('product.categoryId = :categoryId', { categoryId });
     }
 
     queryBuilder

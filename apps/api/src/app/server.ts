@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import ordersRouter from './routes/orders.routes';
 import productsRouter from './routes/products.routes';
+import categoriesRouter from './routes/categories.routes';
 import customersRouter from './routes/customers.routes';
 import societiesRouter from './routes/societies.routes';
 import buildingsRouter from './routes/buildings.routes';
@@ -79,6 +80,7 @@ export const createServer = () => {
   // Routes
   app.use('/api/orders', ordersRouter);
   app.use('/api/products', productsRouter);
+  app.use('/api/categories', categoriesRouter);
   app.use('/api/customers', customersRouter);
   app.use('/api/societies', societiesRouter);
   app.use('/api/buildings', buildingsRouter);

@@ -21,6 +21,7 @@ router.get('/', async (req, res) => {
         : req.query.isAvailable === 'false'
           ? false
           : undefined;
+    const categoryId = req.query.categoryId as string | undefined;
 
     const { products, total } = await productRepo.findAll({
       page,
@@ -28,6 +29,7 @@ router.get('/', async (req, res) => {
       search,
       unit,
       isAvailable,
+      categoryId,
     });
 
     res.json({
