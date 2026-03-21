@@ -15,6 +15,7 @@ import {
   useProducts,
   useDeleteProduct,
   useToggleProductAvailability,
+  useCategories,
   API_BASE_URL,
 } from '@shreehari/data-access';
 import {
@@ -38,9 +39,13 @@ export const ProductsPage: React.FC = () => {
   const [filters, setFilters] = useState({
     unit: '',
     isAvailable: '',
+    categoryId: '',
   });
 
   // API hooks
+  const { data: categoriesData } = useCategories();
+  const categoryFilterOptions = (categoriesData ?? []).map((cat) => ({ value: cat.id, label: cat.name }));
+
   const {
     data: productsData,
     loading,
@@ -51,7 +56,8 @@ export const ProductsPage: React.FC = () => {
     limit,
     searchValue || undefined,
     filters.unit || undefined,
-    filters.isAvailable !== '' ? filters.isAvailable === 'true' : undefined
+    filters.isAvailable !== '' ? filters.isAvailable === 'true' : undefined,
+    filters.categoryId || undefined
   );
   const { deleteProduct, loading: deleteLoading } = useDeleteProduct();
   const { toggleAvailability, loading: toggleLoading } =
@@ -64,7 +70,7 @@ export const ProductsPage: React.FC = () => {
   // Reset page when search or filters change
   useEffect(() => {
     setPage(1);
-  }, [searchValue, filters.unit, filters.isAvailable]);
+  }, [searchValue, filters.unit, filters.isAvailable, filters.categoryId]);
 
   const handleDeleteProduct = (product: ProductDto) => {
     modals.openConfirmModal({
@@ -229,6 +235,7 @@ ${productLines}`;
     setFilters({
       unit: '',
       isAvailable: '',
+      categoryId: '',
     });
     setSearchValue('');
     setPage(1);
@@ -261,6 +268,14 @@ ${productLines}`;
       ],
       value: filters.isAvailable,
     },
+    {
+      key: 'categoryId',
+      label: 'Category',
+      type: 'select',
+      placeholder: 'All categories',
+      options: categoryFilterOptions,
+      value: filters.categoryId,
+    },
   ];
 
   // Define columns for the DataTable
@@ -292,6 +307,18 @@ ${productLines}`;
       key: 'unit',
       title: 'Unit',
       render: (value) => <Badge variant="outline">{value.toUpperCase()}</Badge>,
+    },
+    {
+      key: 'categoryName',
+      title: 'Category',
+      render: (value) =>
+        value ? (
+          <Badge variant="outline">{value}</Badge>
+        ) : (
+          <Text size="sm" c="dimmed">
+            —
+          </Text>
+        ),
     },
     {
       key: 'price',

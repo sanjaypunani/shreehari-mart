@@ -8,6 +8,7 @@ import {
   useCreateProduct,
   useUpdateProduct,
   useProduct,
+  useCategories,
 } from '@shreehari/data-access';
 import {
   Form,
@@ -29,6 +30,7 @@ interface ProductFormData {
   description: string;
   isAvailable: boolean;
   imageFile: File | null;
+  categoryId: string | null;
 }
 
 export const ProductFormPage: React.FC = () => {
@@ -44,9 +46,13 @@ export const ProductFormPage: React.FC = () => {
     description: '',
     isAvailable: true,
     imageFile: null,
+    categoryId: null,
   });
 
   // API hooks
+  const { data: categoriesData } = useCategories();
+  const categoryOptions = (categoriesData ?? []).map((cat) => ({ value: cat.id, label: cat.name }));
+
   const {
     createProduct,
     loading: createLoading,
@@ -72,6 +78,7 @@ export const ProductFormPage: React.FC = () => {
         description: existingProduct.description || '',
         isAvailable: existingProduct.isAvailable,
         imageFile: null, // Can't load existing file
+        categoryId: existingProduct.categoryId ?? null,
       });
     }
   }, [isEditing, existingProduct]);
@@ -88,6 +95,7 @@ export const ProductFormPage: React.FC = () => {
           unit: formData.unit,
           description: formData.description || undefined,
           isAvailable: formData.isAvailable,
+          categoryId: formData.categoryId,
         };
         await updateProduct(id, updateData, formData.imageFile);
         notifications.show({
@@ -102,6 +110,7 @@ export const ProductFormPage: React.FC = () => {
           quantity: formData.quantity,
           unit: formData.unit,
           description: formData.description || undefined,
+          categoryId: formData.categoryId,
         };
         await createProduct(createData, formData.imageFile);
         notifications.show({
@@ -136,6 +145,7 @@ export const ProductFormPage: React.FC = () => {
       description: '',
       isAvailable: true,
       imageFile: null,
+      categoryId: null,
     });
   };
 
@@ -151,6 +161,7 @@ export const ProductFormPage: React.FC = () => {
         quantity: formData.quantity,
         unit: formData.unit,
         description: formData.description || undefined,
+        categoryId: formData.categoryId,
       };
 
       await createProduct(productData, formData.imageFile);
@@ -285,6 +296,19 @@ export const ProductFormPage: React.FC = () => {
                 onChange={(value) =>
                   updateFormData('unit', value as 'gm' | 'kg' | 'pc')
                 }
+              />
+            </FormField>
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 12, md: 8 }}>
+            <FormField>
+              <Select
+                label="Category"
+                placeholder="Select a category (optional)"
+                data={categoryOptions}
+                clearable
+                value={formData.categoryId}
+                onChange={(value) => updateFormData('categoryId', value)}
               />
             </FormField>
           </Grid.Col>
