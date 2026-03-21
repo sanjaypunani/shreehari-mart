@@ -21,6 +21,10 @@ export class Category {
   @Column({ type: 'varchar', length: 500, nullable: true })
   imageUrl?: string;
 
+  @Index()
+  @Column({ type: 'int', default: 0 })
+  sortOrder!: number;
+
   @CreateDateColumn()
   createdAt!: Date;
 
