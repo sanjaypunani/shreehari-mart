@@ -24,6 +24,8 @@ import { BuildingsPage } from './pages/BuildingsPage';
 import { BuildingFormPage } from './pages/BuildingFormPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { MonthlyBillingPage } from './pages/MonthlyBillingPage';
+import { DeliveryPartnersPage } from './pages/DeliveryPartnersPage';
+import { DeliveryPartnerFormPage } from './pages/DeliveryPartnerFormPage';
 import { Layout } from './components/Layout';
 
 function App() {
@@ -42,6 +44,9 @@ function App() {
                 path="/orders/analytics"
                 element={<OrderAnalyticsPage />}
               />
+              <Route path="/delivery-partners" element={<DeliveryPartnersPage />} />
+              <Route path="/delivery-partners/new" element={<DeliveryPartnerFormPage />} />
+              <Route path="/delivery-partners/:id/edit" element={<DeliveryPartnerFormPage />} />
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/products/new" element={<ProductFormPage />} />
               <Route path="/products/:id/edit" element={<ProductFormPage />} />

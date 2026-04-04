@@ -6,6 +6,7 @@ import { SocietyRepository } from '../repositories/SocietyRepository';
 import { BuildingRepository } from '../repositories/BuildingRepository';
 import { WalletRepository } from '../repositories/WalletRepository';
 import { CategoryRepository } from '../repositories/CategoryRepository';
+import { DeliveryPartnerRepository } from '../repositories/DeliveryPartnerRepository';
 import { DatabaseConnection } from '../database/connection';
 
 export class DatabaseService {
@@ -18,6 +19,7 @@ export class DatabaseService {
   private buildingRepository: BuildingRepository;
   private walletRepository: WalletRepository;
   private categoryRepository: CategoryRepository;
+  private deliveryPartnerRepository: DeliveryPartnerRepository;
 
   private constructor() {
     this.productRepository = new ProductRepository();
@@ -28,6 +30,7 @@ export class DatabaseService {
     this.buildingRepository = new BuildingRepository();
     this.walletRepository = new WalletRepository();
     this.categoryRepository = new CategoryRepository();
+    this.deliveryPartnerRepository = new DeliveryPartnerRepository();
   }
 
   public static getInstance(): DatabaseService {
@@ -75,6 +78,11 @@ export class DatabaseService {
   public getCategoryRepository(): CategoryRepository {
     this.ensureConnection();
     return this.categoryRepository;
+  }
+
+  public getDeliveryPartnerRepository(): DeliveryPartnerRepository {
+    this.ensureConnection();
+    return this.deliveryPartnerRepository;
   }
 
   private ensureConnection(): void {

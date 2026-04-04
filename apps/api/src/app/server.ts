@@ -10,6 +10,7 @@ import buildingsRouter from './routes/buildings.routes';
 import analyticsRouter from './routes/analytics.routes';
 import monthlyBillingRouter from './routes/monthly-billing.routes';
 import authRouter from './routes/auth.routes';
+import deliveryPartnersRouter from './routes/delivery-partners.routes';
 import { DatabaseService } from '@shreehari/data-access';
 
 // Simple CORS options
@@ -87,6 +88,7 @@ export const createServer = () => {
   app.use('/api/analytics', analyticsRouter);
   app.use('/api/monthly-billing', monthlyBillingRouter);
   app.use('/api/auth', authRouter);
+  app.use('/api/delivery-partners', deliveryPartnersRouter);
 
   // 404 handler
   app.use((req, res) => {

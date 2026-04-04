@@ -12,6 +12,7 @@ import {
   IconHome,
   IconLogout,
   IconReceipt,
+  IconTruck,
 } from '@tabler/icons-react';
 
 interface LayoutProps {
@@ -21,6 +22,7 @@ interface LayoutProps {
 const navigation = [
   { icon: IconDashboard, label: 'Dashboard', href: '/' },
   { icon: IconShoppingCart, label: 'Orders', href: '/orders' },
+  { icon: IconTruck, label: 'Delivery Partners', href: '/delivery-partners' },
   { icon: IconBox, label: 'Products', href: '/products' },
   { icon: IconTag, label: 'Categories', href: '/categories' },
   { icon: IconUsers, label: 'Customers', href: '/customers' },

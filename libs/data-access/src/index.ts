@@ -35,6 +35,7 @@ export { BuildingRepository } from './repositories/BuildingRepository';
 export { WalletRepository } from './repositories/WalletRepository';
 export { MonthlyBillRepository } from './repositories/MonthlyBillRepository';
 export { CategoryRepository, ReorderValidationError } from './repositories/CategoryRepository';
+export { DeliveryPartnerRepository } from './repositories/DeliveryPartnerRepository';
 
 // Re-export database service
 export { DatabaseService } from './services/DatabaseService';
@@ -75,6 +76,10 @@ import {
   CreateCategoryDto,
   UpdateCategoryDto,
   ReorderCategoriesDto,
+  DeliveryPartnerDto,
+  CreateDeliveryPartnerDto,
+  UpdateDeliveryPartnerDto,
+  AssignDeliveryPartnerDto,
 } from '@shreehari/types';
 
 const getEnv = (key: string): string | undefined => {
@@ -1846,4 +1851,166 @@ export const useReorderCategories = () => {
   };
 
   return { reorderCategories, loading, error };
+};
+
+// Delivery Partner Hooks
+export const useDeliveryPartners = (activeOnly?: boolean) => {
+  const [data, setData] = useState<DeliveryPartnerDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refetch = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const endpoint = activeOnly
+        ? '/delivery-partners?active=true'
+        : '/delivery-partners';
+
+      const response = await apiCall<DeliveryPartnerDto[]>(endpoint);
+      setData(response.data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to fetch delivery partners'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refetch();
+  }, [activeOnly]);
+
+  return { data, loading, error, refetch };
+};
+
+export const useDeliveryPartner = (id: string) => {
+  const [data, setData] = useState<DeliveryPartnerDto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDeliveryPartner = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await apiCall<DeliveryPartnerDto>(
+          `/delivery-partners/${id}`
+        );
+        setData(response.data);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to fetch delivery partner'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchDeliveryPartner();
+    }
+  }, [id]);
+
+  return { data, loading, error };
+};
+
+export const useCreateDeliveryPartner = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const createDeliveryPartner = async (
+    data: CreateDeliveryPartnerDto
+  ): Promise<DeliveryPartnerDto> => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await apiCall<DeliveryPartnerDto>('/delivery-partners', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+
+      return response.data;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to create delivery partner';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { createDeliveryPartner, loading, error };
+};
+
+export const useUpdateDeliveryPartner = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateDeliveryPartner = async (
+    id: string,
+    data: UpdateDeliveryPartnerDto
+  ): Promise<DeliveryPartnerDto> => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await apiCall<DeliveryPartnerDto>(
+        `/delivery-partners/${id}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify(data),
+        }
+      );
+
+      return response.data;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to update delivery partner';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { updateDeliveryPartner, loading, error };
+};
+
+export const useDeleteDeliveryPartner = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const deleteDeliveryPartner = async (id: string): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      await apiCall(`/delivery-partners/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to delete delivery partner';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { deleteDeliveryPartner, loading, error };
 };
