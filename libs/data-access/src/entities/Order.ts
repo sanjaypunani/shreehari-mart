@@ -12,6 +12,7 @@ import {
 import { Customer } from './Customer';
 import { OrderItem } from './OrderItem';
 import { MonthlyBill } from './MonthlyBill';
+import { DeliveryPartner } from './DeliveryPartner';
 
 export type OrderStatus = 'pending' | 'confirmed' | 'delivered' | 'cancelled';
 
@@ -64,6 +65,9 @@ export class Order {
   @Column({ type: 'uuid', nullable: true })
   monthlyBillId?: string;
 
+  @Column({ type: 'uuid', nullable: true })
+  deliveryPartnerId?: string;
+
   @CreateDateColumn()
   createdAt!: Date;
 
@@ -84,6 +88,13 @@ export class Order {
   @JoinColumn({ name: 'monthlyBillId' })
   monthlyBill?: MonthlyBill;
 
+  @ManyToOne(() => DeliveryPartner, (dp) => dp.orders, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'deliveryPartnerId' })
+  deliveryPartner?: DeliveryPartner;
+
   // Virtual fields for DTOs
   get customerName(): string {
     return this.customer?.name || '';
@@ -91,5 +102,9 @@ export class Order {
 
   get customerEmail(): string {
     return this.customer?.email || '';
+  }
+
+  get deliveryPartnerName(): string {
+    return this.deliveryPartner?.name || '';
   }
 }

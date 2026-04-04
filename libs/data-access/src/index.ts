@@ -19,6 +19,7 @@ export type {
 } from './entities/WalletTransaction';
 export type { MonthlyBill } from './entities/MonthlyBill';
 export type { Category } from './entities/Category';
+export type { DeliveryPartner } from './entities/DeliveryPartner';
 
 // Re-export database utilities (these will be safe now due to the config.ts changes)
 export { DatabaseConnection } from './database/connection';
@@ -76,8 +77,13 @@ import {
   ReorderCategoriesDto,
 } from '@shreehari/types';
 
-const getEnv = (key: string) =>
-  typeof process !== 'undefined' && process.env ? process.env[key] : undefined;
+const getEnv = (key: string): string | undefined => {
+  try {
+    return (process.env as Record<string, string | undefined>)[key];
+  } catch {
+    return undefined;
+  }
+};
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, '');
 

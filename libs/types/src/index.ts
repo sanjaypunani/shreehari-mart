@@ -12,6 +12,8 @@ export interface OrderDto {
   paymentMode: 'wallet' | 'monthly' | 'cod';
   totalAmount: number;
   discount?: number;
+  deliveryPartnerId?: string | null;
+  deliveryPartnerName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -52,6 +54,7 @@ export interface ProductDto {
   isAvailable: boolean;
   categoryId?: string | null;
   categoryName?: string | null;
+  discount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -291,6 +294,32 @@ export interface UpdateCategoryDto extends Partial<CreateCategoryDto> {}
 
 export interface ReorderCategoriesDto {
   ids: string[];
+}
+
+// Delivery Partner DTOs
+export interface DeliveryPartnerDto {
+  id: string;
+  name: string;
+  mobileNumber: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDeliveryPartnerDto {
+  name: string;
+  mobileNumber: string;
+  isActive?: boolean;
+}
+
+export interface UpdateDeliveryPartnerDto {
+  name?: string;
+  mobileNumber?: string;
+  isActive?: boolean;
+}
+
+export interface AssignDeliveryPartnerDto {
+  deliveryPartnerId: string | null;
 }
 
 export type BillStatus = 'draft' | 'sent' | 'paid' | 'overdue';
