@@ -37,6 +37,7 @@ export class OrderRepository {
     limit?: number;
     status?: OrderStatus;
     customerId?: string;
+    deliveryPartnerId?: string;
     dateFrom?: Date;
     dateTo?: Date;
   }): Promise<{ orders: Order[]; total: number }> {
@@ -45,6 +46,7 @@ export class OrderRepository {
       limit = 10,
       status,
       customerId,
+      deliveryPartnerId,
       dateFrom,
       dateTo,
     } = options || {};
@@ -54,7 +56,8 @@ export class OrderRepository {
       .leftJoinAndSelect('customer.society', 'society')
       .leftJoinAndSelect('customer.building', 'building')
       .leftJoinAndSelect('order.items', 'items')
-      .leftJoinAndSelect('items.product', 'product');
+      .leftJoinAndSelect('items.product', 'product')
+      .leftJoinAndSelect('order.deliveryPartner', 'deliveryPartner');
 
     if (status) {
       queryBuilder.andWhere('order.status = :status', { status });
@@ -62,6 +65,14 @@ export class OrderRepository {
 
     if (customerId) {
       queryBuilder.andWhere('order.customerId = :customerId', { customerId });
+    }
+
+    if (deliveryPartnerId) {
+      if (deliveryPartnerId === 'unassigned') {
+        queryBuilder.andWhere('order.deliveryPartnerId IS NULL');
+      } else {
+        queryBuilder.andWhere('order.deliveryPartnerId = :deliveryPartnerId', { deliveryPartnerId });
+      }
     }
 
     if (dateFrom) {
@@ -85,7 +96,7 @@ export class OrderRepository {
   async findById(id: string): Promise<Order | null> {
     return this.repository.findOne({
       where: { id },
-      relations: ['customer', 'customer.address', 'items', 'items.product'],
+      relations: ['customer', 'customer.address', 'items', 'items.product', 'deliveryPartner'],
     });
   }
 
@@ -270,6 +281,11 @@ export class OrderRepository {
     });
 
     await manager.save(WalletTransaction, transaction);
+  }
+
+  async assignDeliveryPartner(orderId: string, deliveryPartnerId: string | null): Promise<Order | null> {
+    await this.repository.update(orderId, { deliveryPartnerId: deliveryPartnerId as any });
+    return this.findById(orderId);
   }
 
   async updateStatus(id: string, status: OrderStatus): Promise<Order | null> {

@@ -132,7 +132,8 @@ export const useOrders = (
   limit = 10,
   status?: string,
   sortBy?: string,
-  sortOrder?: 'ASC' | 'DESC'
+  sortOrder?: 'ASC' | 'DESC',
+  deliveryPartnerId?: string
 ) => {
   const [data, setData] = useState<PaginatedResponse<OrderDto> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -160,6 +161,10 @@ export const useOrders = (
         queryParams.append('sortOrder', sortOrder);
       }
 
+      if (deliveryPartnerId) {
+        queryParams.append('deliveryPartnerId', deliveryPartnerId);
+      }
+
       const response = await apiCall<PaginatedResponse<OrderDto>>(
         `/orders?${queryParams}`
       );
@@ -174,7 +179,7 @@ export const useOrders = (
 
   useEffect(() => {
     refetch();
-  }, [page, limit, status, sortBy, sortOrder]);
+  }, [page, limit, status, sortBy, sortOrder, deliveryPartnerId]);
 
   return { data, loading, error, refetch };
 };
@@ -2013,4 +2018,38 @@ export const useDeleteDeliveryPartner = () => {
   };
 
   return { deleteDeliveryPartner, loading, error };
+};
+
+export const useAssignDeliveryPartner = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const assignDeliveryPartner = async (
+    orderId: string,
+    data: AssignDeliveryPartnerDto
+  ) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await apiCall(`/orders/${orderId}/assign-partner`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      return response.data;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to assign delivery partner';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { assignDeliveryPartner, loading, error };
 };

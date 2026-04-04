@@ -20,9 +20,10 @@ import {
   IconSearch,
   IconFilter,
   IconCopy,
+  IconTruck,
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { OrderDto } from '@shreehari/types';
+import { OrderDto, DeliveryPartnerDto } from '@shreehari/types';
 import {
   DataTable,
   PageHeader,
@@ -40,6 +41,8 @@ import {
   useDeleteOrder,
   useUpdateOrderStatus,
   getCustomerWalletById,
+  useDeliveryPartners,
+  useAssignDeliveryPartner,
 } from '@shreehari/data-access';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -59,6 +62,10 @@ export const OrdersPage: React.FC = () => {
     'pending' | 'confirmed' | 'delivered' | 'cancelled'
   >('pending');
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [assignPartnerOpened, setAssignPartnerOpened] = useState(false);
+  const [selectedOrderForAssign, setSelectedOrderForAssign] = useState<OrderDto | null>(null);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
+  const [assignLoading, setAssignLoading] = useState(false);
 
   // Search and filter states
   const [searchValue, setSearchValue] = useState('');
@@ -68,6 +75,7 @@ export const OrdersPage: React.FC = () => {
     paymentMode: '',
     dateFrom: '',
     dateTo: '',
+    deliveryPartnerId: '',
   });
 
   // API hooks
@@ -76,7 +84,9 @@ export const OrdersPage: React.FC = () => {
     loading,
     error,
     refetch,
-  } = useOrders(page, limit, filters.status);
+  } = useOrders(page, limit, filters.status, undefined, undefined, filters.deliveryPartnerId || undefined);
+  const { data: activePartners } = useDeliveryPartners(true);
+  const { assignDeliveryPartner } = useAssignDeliveryPartner();
   const { deleteOrder, loading: deleteLoading } = useDeleteOrder();
   const { updateOrderStatus, loading: updateLoading } = useUpdateOrderStatus();
 
@@ -224,6 +234,7 @@ export const OrdersPage: React.FC = () => {
       paymentMode: '',
       dateFrom: '',
       dateTo: '',
+      deliveryPartnerId: '',
     });
   };
 
@@ -241,6 +252,20 @@ export const OrdersPage: React.FC = () => {
         { value: 'cancelled', label: 'Cancelled' },
       ],
       value: filters.status,
+    },
+    {
+      key: 'deliveryPartnerId',
+      label: 'Delivery Partner',
+      type: 'select',
+      placeholder: 'All delivery partners',
+      options: [
+        { value: 'unassigned', label: 'Unassigned' },
+        ...(activePartners || []).map((p: DeliveryPartnerDto) => ({
+          value: p.id,
+          label: p.name,
+        })),
+      ],
+      value: filters.deliveryPartnerId,
     },
     {
       key: 'paymentMode',
@@ -304,6 +329,36 @@ export const OrdersPage: React.FC = () => {
         message: 'Failed to update order statuses',
         color: 'red',
       });
+    }
+  };
+
+  const handleAssignPartner = (order: OrderDto) => {
+    setSelectedOrderForAssign(order);
+    setSelectedPartnerId(order.deliveryPartnerId || '__none__');
+    setAssignPartnerOpened(true);
+  };
+
+  const handleAssignPartnerSubmit = async () => {
+    if (!selectedOrderForAssign) return;
+    setAssignLoading(true);
+    try {
+      const partnerId = selectedPartnerId === '__none__' ? null : selectedPartnerId;
+      await assignDeliveryPartner(selectedOrderForAssign.id, { deliveryPartnerId: partnerId });
+      notifications.show({
+        title: 'Success',
+        message: partnerId ? 'Delivery partner assigned' : 'Delivery partner unassigned',
+        color: 'green',
+      });
+      setAssignPartnerOpened(false);
+      refetch();
+    } catch (err) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to assign delivery partner',
+        color: 'red',
+      });
+    } finally {
+      setAssignLoading(false);
     }
   };
 
@@ -520,6 +575,18 @@ Thank you for your order.
       ),
     },
     {
+      key: 'deliveryPartnerName',
+      title: 'Delivery Partner',
+      render: (value) =>
+        value ? (
+          <Text size="sm">{value}</Text>
+        ) : (
+          <Text size="sm" c="dimmed" fs="italic">
+            Unassigned
+          </Text>
+        ),
+    },
+    {
       key: 'paymentMode',
       title: 'Payment',
       render: (value) => (
@@ -562,6 +629,12 @@ Thank you for your order.
       label: 'Update Status',
       color: 'green',
       onClick: handleUpdateStatus,
+    },
+    {
+      icon: <IconTruck size={16} />,
+      label: 'Assign Partner',
+      color: 'violet',
+      onClick: (order) => handleAssignPartner(order),
     },
     {
       icon: <IconCopy size={16} />,
@@ -742,6 +815,14 @@ Thank you for your order.
               <Text tt="capitalize">{selectedOrder.paymentMode || 'N/A'}</Text>
             </Group>
             <Group justify="space-between">
+              <Text fw={500}>Delivery Partner:</Text>
+              {selectedOrder.deliveryPartnerName ? (
+                <Text>{selectedOrder.deliveryPartnerName}</Text>
+              ) : (
+                <Text c="dimmed" fs="italic">Unassigned</Text>
+              )}
+            </Group>
+            <Group justify="space-between">
               <Text fw={500}>Total Amount:</Text>
               <Text fw={500} size="lg">
                 {formatCurrency(selectedOrder.totalAmount || 0)}
@@ -880,6 +961,44 @@ Thank you for your order.
               leftSection={<IconCheck size={16} />}
             >
               Update {selectedOrders.length} Orders
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* Assign Delivery Partner Modal */}
+      <Modal
+        opened={assignPartnerOpened}
+        onClose={() => setAssignPartnerOpened(false)}
+        title="Assign Delivery Partner"
+        centered
+      >
+        <Stack>
+          {selectedOrderForAssign && (
+            <Text size="sm">
+              Order for: <strong>{selectedOrderForAssign.customerName}</strong>
+            </Text>
+          )}
+          <Select
+            label="Delivery Partner"
+            placeholder="Select a delivery partner"
+            searchable
+            data={[
+              { value: '__none__', label: 'None (Unassign)' },
+              ...(activePartners || []).map((p: DeliveryPartnerDto) => ({
+                value: p.id,
+                label: `${p.name} — ${p.mobileNumber}`,
+              })),
+            ]}
+            value={selectedPartnerId}
+            onChange={setSelectedPartnerId}
+          />
+          <Group justify="flex-end" mt="md">
+            <Button variant="outline" onClick={() => setAssignPartnerOpened(false)}>
+              Cancel
+            </Button>
+            <Button color="violet" loading={assignLoading} onClick={handleAssignPartnerSubmit}>
+              Assign
             </Button>
           </Group>
         </Stack>

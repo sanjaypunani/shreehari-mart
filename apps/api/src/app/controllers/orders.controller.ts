@@ -76,6 +76,8 @@ const mapOrderToDto = (order: any): OrderDto => {
               : String(item.createdAt),
         })
       ) || [],
+    deliveryPartnerId: order.deliveryPartnerId || null,
+    deliveryPartnerName: order.deliveryPartnerName || order.deliveryPartner?.name || null,
     status: order.status,
     paymentMode: order.paymentMode,
     totalAmount: order.totalAmount,
@@ -123,7 +125,7 @@ const validateOrderItems = (items: CreateOrderItemDto[]) => {
 export const getAllOrders = asyncHandler(
   async (req: Request, res: Response) => {
     const { page, limit } = paginate(req);
-    const { status, customerId } = req.query;
+    const { status, customerId, deliveryPartnerId } = req.query;
 
     try {
       const databaseService = DatabaseService.getInstance();
@@ -136,6 +138,10 @@ export const getAllOrders = asyncHandler(
         customerId:
           typeof customerId === 'string' && customerId.trim().length > 0
             ? customerId
+            : undefined,
+        deliveryPartnerId:
+          typeof deliveryPartnerId === 'string' && deliveryPartnerId.trim().length > 0
+            ? deliveryPartnerId
             : undefined,
       });
 
@@ -379,6 +385,39 @@ export const updateOrderStatus = asyncHandler(
       }
       throw createError('Failed to update order status', 500);
     }
+  }
+);
+
+export const assignDeliveryPartner = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { deliveryPartnerId } = req.body;
+
+    const db = DatabaseService.getInstance();
+    const orderRepository = db.getOrderRepository();
+
+    // Verify order exists
+    const order = await orderRepository.findById(id);
+    if (!order) {
+      throw createError('Order not found', 404);
+    }
+
+    // If assigning (not unassigning), verify delivery partner exists
+    if (deliveryPartnerId) {
+      const deliveryPartnerRepository = db.getDeliveryPartnerRepository();
+      const partner = await deliveryPartnerRepository.findById(deliveryPartnerId);
+      if (!partner) {
+        throw createError('Delivery partner not found', 404);
+      }
+    }
+
+    const updatedOrder = await orderRepository.assignDeliveryPartner(id, deliveryPartnerId ?? null);
+
+    res.json({
+      success: true,
+      data: mapOrderToDto(updatedOrder!),
+      message: deliveryPartnerId ? 'Delivery partner assigned' : 'Delivery partner unassigned',
+    });
   }
 );
 

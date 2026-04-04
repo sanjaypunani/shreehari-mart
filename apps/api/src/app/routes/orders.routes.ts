@@ -6,6 +6,7 @@ import {
   updateOrder,
   deleteOrder,
   updateOrderStatus,
+  assignDeliveryPartner,
   getOrderStats,
   bulkUpdateOrderStatus,
 } from '../controllers/orders.controller';
@@ -29,6 +30,9 @@ router.put('/:id', updateOrder);
 
 // PATCH /api/orders/:id/status - Update order status
 router.patch('/:id/status', updateOrderStatus);
+
+// PATCH /api/orders/:id/assign-partner - Assign delivery partner
+router.patch('/:id/assign-partner', assignDeliveryPartner);
 
 // PATCH /api/orders/bulk-update - Bulk update order status
 router.patch('/bulk-update', bulkUpdateOrderStatus);
