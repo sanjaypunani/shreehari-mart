@@ -28,6 +28,7 @@ if (
     const { Product } = require('../entities/Product');
     const { Customer } = require('../entities/Customer');
     const { Order } = require('../entities/Order');
+    const { DeliveryPartner } = require('../entities/DeliveryPartner');
     const { OrderItem } = require('../entities/OrderItem');
     // const { OrderPayment } = require('../entities/OrderPayment');
     const { Address } = require('../entities/Address');
@@ -37,18 +38,38 @@ if (
     const { WalletTransaction } = require('../entities/WalletTransaction');
     const { MonthlyBill } = require('../entities/MonthlyBill');
     const { User } = require('../entities/User');
+    const { Category } = require('../entities/Category');
 
+    // Prefer a full connection URL (Supabase / production), fall back to individual vars (local dev)
+    const databaseUrl =
+      process.env['cropzo_database_POSTGRES_URL_NON_POOLING'] ||
+      process.env['DATABASE_URL'] ||
+      '';
+
+    const isProduction = getEnvVar('NODE_ENV', 'development') !== 'development';
+
+    DatabaseConfig = databaseUrl
+      ? {
+          type: 'postgres' as const,
+          url: databaseUrl,
+          ssl: { rejectUnauthorized: false },
+          synchronize: false,
+          logging: false,
+        }
+      : {
+          type: 'postgres' as const,
+          host: getEnvVar('DB_HOST', 'localhost'),
+          port: getEnvNumber('DB_PORT', '5432'),
+          username: getEnvVar('DB_USERNAME', 'postgres'),
+          password: getEnvVar('DB_PASSWORD', 'password'),
+          database: getEnvVar('DB_NAME', 'shreehari_mart'),
+          synchronize: !isProduction,
+          logging: false,
+        };
+
+    // Merge in entities regardless of which branch was taken
     DatabaseConfig = {
-      type: 'postgres' as const,
-      host: getEnvVar('DB_HOST', 'localhost'),
-      port: getEnvNumber('DB_PORT', '5432'),
-      username: getEnvVar('DB_USERNAME', 'postgres'),
-      password: getEnvVar('DB_PASSWORD', 'password'),
-      database: getEnvVar('DB_NAME', 'shreehari_mart'),
-      // ssl: { require: true, rejectUnauthorized: false },
-      synchronize: getEnvVar('NODE_ENV', 'development') === 'development',
-      // logging: getEnvVar('NODE_ENV', 'development') === 'development',
-      logging: false,
+      ...DatabaseConfig,
       entities: [
         Product,
         Customer,
@@ -62,6 +83,8 @@ if (
         WalletTransaction,
         MonthlyBill,
         User,
+        Category,
+        DeliveryPartner,
       ],
       migrations: ['src/database/migrations/*.ts'],
       subscribers: ['src/database/subscribers/*.ts'],
