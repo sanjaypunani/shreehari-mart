@@ -25,14 +25,15 @@ export function CategorySidebar({
   return (
     <Box
       style={{
-        width: '80px', // Fixed width for sidebar
-        height: 'calc(100vh - 60px)', // Full height minus header (approx)
-        backgroundColor: '#f8f9fa', // Light gray background
+        width: '90px',
+        height: 'calc(var(--app-viewport-height) - 70px)',
+        backgroundColor: 'rgba(255, 255, 255, 0.78)',
         borderRight: `1px solid ${colors.border}`,
         display: 'flex',
         flexDirection: 'column',
         position: 'sticky',
-        top: 60, // Below header
+        top: 70,
+        backdropFilter: 'blur(8px)',
       }}
     >
       <ScrollArea style={{ height: '100%' }} scrollbarSize={4}>
@@ -45,7 +46,7 @@ export function CategorySidebar({
                 onClick={() => onSelectCategory(category.id)}
                 style={{
                   padding: `${spacing.sm} 4px`,
-                  backgroundColor: isSelected ? 'white' : 'transparent',
+                  backgroundColor: isSelected ? 'rgba(31, 122, 99, 0.1)' : 'transparent',
                   borderLeft: isSelected
                     ? `4px solid ${colors.primary}`
                     : '4px solid transparent',
@@ -65,7 +66,7 @@ export function CategorySidebar({
                     borderRadius: '50%',
                     overflow: 'hidden',
                     marginBottom: spacing.xs,
-                    border: isSelected ? `1px solid ${colors.border}` : 'none',
+                    border: `1px solid ${isSelected ? colors.primary : colors.border}`,
                     backgroundColor: 'white',
                     padding: '4px',
                   }}
@@ -101,35 +102,6 @@ export function CategorySidebar({
                 >
                   {category.name}
                 </Text>
-                
-                {/* Curved corner effect for selected item (optional polish) */}
-                {isSelected && (
-                   <div style={{
-                       position: 'absolute',
-                       right: 0,
-                       top: -10,
-                       width: 10,
-                       height: 10,
-                       background: 'transparent',
-                       borderBottomRightRadius: 10,
-                       boxShadow: '5px 5px 0 5px white',
-                       zIndex: 1
-                   }} />
-                )}
-                 {isSelected && (
-                   <div style={{
-                       position: 'absolute',
-                       right: 0,
-                       bottom: -10,
-                       width: 10,
-                       height: 10,
-                       background: 'transparent',
-                       borderTopRightRadius: 10,
-                       boxShadow: '5px -5px 0 5px white',
-                       zIndex: 1
-                   }} />
-                )}
-
               </UnstyledButton>
             );
           })}

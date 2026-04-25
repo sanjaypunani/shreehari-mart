@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
+const apiUrl = process.env.VITE_API_URL || '';
+
 export default defineConfig({
   plugins: [react()],
   root: __dirname,
@@ -10,7 +12,11 @@ export default defineConfig({
     host: true,
   },
   define: {
-    'process.env': {},
+    'process.env': {
+      NEXT_PUBLIC_API_URL: apiUrl,
+      API_URL: apiUrl,
+      NODE_ENV: process.env.NODE_ENV || 'production',
+    },
   },
   resolve: {
     alias: {

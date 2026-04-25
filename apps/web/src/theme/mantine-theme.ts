@@ -5,30 +5,30 @@ import { radius, shadow } from './spacing';
 
 // Define primary color palette for Mantine
 const primaryColor: MantineColorsTuple = [
-  '#e6f4f0',
-  '#cce9e1',
-  '#99d3c3',
-  '#66bda5',
-  '#33a687',
-  '#247c62', // main color
-  '#1d634e',
-  '#164a3b',
-  '#0f3127',
-  '#071914',
+  '#e7f6f2',
+  '#ceece4',
+  '#9ed7c8',
+  '#6fc2ab',
+  '#43ad8e',
+  '#1f7a63', // main color
+  '#1b6e59',
+  '#165847',
+  '#114236',
+  '#0a2d24',
 ];
 
 // Define secondary color palette for Mantine
 const secondaryColor: MantineColorsTuple = [
-  '#fffceb',
-  '#fff9d6',
-  '#fef3ad',
-  '#fded84',
-  '#fde35a', // main color
-  '#e4ca51',
-  '#cab148',
-  '#b0983f',
-  '#967f36',
-  '#7c662d',
+  '#fff3e8',
+  '#fee4cf',
+  '#fdc89f',
+  '#fcab6e',
+  '#fb8f3f',
+  '#f97316', // main color
+  '#db6410',
+  '#be550b',
+  '#a04607',
+  '#7f3704',
 ];
 
 export const mantineTheme = createTheme({
@@ -67,7 +67,7 @@ export const mantineTheme = createTheme({
     xl: shadow.lg,
   },
   headings: {
-    fontFamily: typography.fontFamily,
+    fontFamily: typography.headingFontFamily,
     fontWeight: typography.fontWeight.bold.toString(),
     sizes: {
       h1: {

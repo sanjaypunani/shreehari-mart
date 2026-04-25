@@ -1,0 +1,129 @@
+.page {
+  min-height: var(--app-viewport-height);
+  background:
+    radial-gradient(circle at 10% -10%, rgba(31, 122, 99, 0.2), transparent 36%),
+    radial-gradient(circle at 100% 5%, rgba(249, 115, 22, 0.16), transparent 34%),
+    #f5f8fc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 14px calc(20px + var(--safe-area-bottom));
+}
+
+.card {
+  width: 100%;
+  max-width: 430px;
+  background: #ffffff;
+  border: 1px solid #dbe3ec;
+  border-radius: 28px;
+  box-shadow: 0 22px 38px rgba(15, 23, 42, 0.12);
+  padding: 28px 20px 20px;
+}
+
+.iconWrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid rgba(31, 122, 99, 0.25);
+  animation: ringPulse 2.2s ease-out infinite;
+}
+
+.ring:nth-child(2) {
+  animation-delay: 0.35s;
+}
+
+.checkCircle {
+  width: 94px;
+  height: 94px;
+  border-radius: 9999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(150deg, #1f7a63 0%, #1a6b57 100%);
+  box-shadow: 0 16px 30px rgba(31, 122, 99, 0.35);
+  animation: popIn 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.checkSvg {
+  width: 44px;
+  height: 44px;
+}
+
+.checkPath {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 3.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 72;
+  stroke-dashoffset: 72;
+  animation: drawCheck 460ms ease-out 220ms forwards;
+}
+
+.content {
+  animation: fadeUp 520ms ease-out 150ms both;
+}
+
+.meta {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(31, 122, 99, 0.07), rgba(249, 115, 22, 0.08));
+  border: 1px solid rgba(31, 122, 99, 0.16);
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.84);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes drawCheck {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ringPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.25);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring,
+  .checkCircle,
+  .checkPath,
+  .content {
+    animation: none !important;
+  }
+}

@@ -13,13 +13,14 @@ import {
   CloseButton,
   Paper,
   Divider,
-  ActionIcon,
   Badge,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconChevronLeft, IconPlus } from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import { LoginBottomSheet } from '../../components/auth/LoginBottomSheet';
+import { StickyPageHeader } from '../../components/navigation/StickyPageHeader';
+import { ConfirmDialog } from '../../components/ui/Modal';
 import { useRouter } from 'next/navigation';
 import { useAppStore, useAuth, useCartStore } from '../../store';
 import { colors, spacing, radius } from '../../theme';
@@ -93,6 +94,8 @@ const DEFAULT_PIECE_OPTIONS = [
 export default function CartPage() {
   const router = useRouter();
   const [loginOpen, { open: openLogin, close: closeLogin }] = useDisclosure(false);
+  const [confirmOpen, { open: openConfirm, close: closeConfirm }] =
+    useDisclosure(false);
   const auth = useAuth();
   const updateUser = useAppStore((state) => state.updateUser);
   const { mutateAsync: createOrder, isPending: isCreatingOrder } =
@@ -181,15 +184,15 @@ export default function CartPage() {
         deliveryDate: getLocalDateString(),
       });
 
+      const createdOrderId = response?.data?.id
+        ? String(response.data.id)
+        : '';
+
       clearCart();
-      notifications.show({
-        color: 'green',
-        title: 'Order placed',
-        message: response?.data?.id
-          ? `Order #${String(response.data.id).slice(0, 8).toUpperCase()} created successfully.`
-          : 'Your order has been placed successfully.',
-      });
-      router.push('/account');
+      const successUrl = `/order-success?items=${encodeURIComponent(String(availableItems.length))}&amount=${encodeURIComponent(
+        String(Math.round(toBePaid))
+      )}${createdOrderId ? `&orderId=${encodeURIComponent(createdOrderId)}` : ''}`;
+      router.push(successUrl);
     } catch (error) {
       notifications.show({
         color: 'red',
@@ -201,6 +204,24 @@ export default function CartPage() {
     }
   };
 
+  const handleCheckoutPress = () => {
+    if (!isAuthenticated) {
+      openLogin();
+      return;
+    }
+
+    if (availableItems.length === 0) {
+      notifications.show({
+        color: 'red',
+        title: 'No available items',
+        message: 'Please add available products to place your order.',
+      });
+      return;
+    }
+
+    openConfirm();
+  };
+
   // If cart is empty, show empty state
   if (items.length === 0) {
     return (
@@ -210,35 +231,7 @@ export default function CartPage() {
           backgroundColor: colors.surface,
         }}
       >
-        {/* Header */}
-        <Paper
-          shadow="sm"
-          style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 100,
-            backgroundColor: '#ffffff',
-            borderBottom: `1px solid ${colors.border}`,
-          }}
-        >
-          <Container size="sm" p={0}>
-            <Group p={spacing.md} justify="space-between" align="center">
-              <Group gap={spacing.sm}>
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  onClick={() => router.back()}
-                  size="lg"
-                >
-                  <IconChevronLeft size={24} />
-                </ActionIcon>
-                <Text size="lg" fw={600} c={colors.text.primary}>
-                  Your Cart
-                </Text>
-              </Group>
-            </Group>
-          </Container>
-        </Paper>
+        <StickyPageHeader title="Your Cart" onBack={() => router.back()} />
 
         {/* Empty state */}
         <Container size="sm" p={spacing.xl}>
@@ -272,40 +265,17 @@ export default function CartPage() {
       }}
     >
       <LoginBottomSheet opened={loginOpen} onClose={closeLogin} returnUrl="/cart" />
-      
-      {/* Header */}
-      <Paper
-        shadow="sm"
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-          backgroundColor: '#ffffff',
-          borderBottom: `1px solid ${colors.border}`,
-        }}
-      >
-        <Container size="sm" p={0}>
-          <Group p={spacing.md} justify="space-between" align="center">
-            <Group gap={spacing.sm}>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                onClick={() => router.back()}
-                size="lg"
-              >
-                <IconChevronLeft size={24} />
-              </ActionIcon>
-              <Text size="lg" fw={600} c={colors.text.primary}>
-                Your Cart
-              </Text>
-            </Group>
-            <Text size="sm" c={colors.text.secondary}>
-              {availableItems.length} Item
-              {availableItems.length !== 1 ? 's' : ''}
-            </Text>
-          </Group>
-        </Container>
-      </Paper>
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={closeConfirm}
+        onConfirm={handleCheckout}
+        title="Confirm Order"
+        message={`You are placing an order for ${availableItems.length} item${availableItems.length === 1 ? '' : 's'} totaling ${formatPrice(toBePaid)}. Do you want to continue?`}
+        confirmText="Place Order"
+        cancelText="Review Cart"
+        variant="warning"
+      />
+      <StickyPageHeader title="Your Cart" onBack={() => router.back()} />
 
       <Container size="sm" p={0}>
         {/* Delivery Time Badge */}
@@ -426,9 +396,10 @@ export default function CartPage() {
                           size="xs"
                           color="gray"
                           onClick={() => {
-                            const currentIndex = quantityOptions.findIndex(
+                            const rawIndex = quantityOptions.findIndex(
                               (opt) => opt.value === item.selectedVariant
                             );
+                            const currentIndex = rawIndex >= 0 ? rawIndex : 0;
                             if (currentIndex > 0) {
                               const newOption =
                                 quantityOptions[currentIndex - 1];
@@ -450,9 +421,12 @@ export default function CartPage() {
                             }
                           }}
                           disabled={
-                            quantityOptions.findIndex(
-                              (opt) => opt.value === item.selectedVariant
-                            ) === 0
+                            (() => {
+                              const idx = quantityOptions.findIndex(
+                                (opt) => opt.value === item.selectedVariant
+                              );
+                              return idx <= 0;
+                            })()
                           }
                           style={{
                             minWidth: 32,
@@ -512,9 +486,10 @@ export default function CartPage() {
                           size="xs"
                           color="gray"
                           onClick={() => {
-                            const currentIndex = quantityOptions.findIndex(
+                            const rawIndex = quantityOptions.findIndex(
                               (opt) => opt.value === item.selectedVariant
                             );
+                            const currentIndex = rawIndex >= 0 ? rawIndex : 0;
                             if (currentIndex < quantityOptions.length - 1) {
                               const newOption =
                                 quantityOptions[currentIndex + 1];
@@ -639,16 +614,6 @@ export default function CartPage() {
               <Text size="md" fw={700} c={colors.text.primary}>
                 To Pay: {formatPrice(toBePaid)}
               </Text>
-              <Button
-                variant="subtle"
-                size="xs"
-                color="blue"
-                onClick={() => {
-                  // Show detailed bill modal or expand
-                }}
-              >
-                View Detailed Bill
-              </Button>
             </Group>
           </Stack>
         </Paper>
@@ -692,7 +657,7 @@ export default function CartPage() {
               fontSize: '16px',
               fontWeight: 600,
             }}
-            onClick={handleCheckout}
+            onClick={handleCheckoutPress}
             loading={isPlacingOrder}
             disabled={isAuthenticated && availableItems.length === 0}
           >

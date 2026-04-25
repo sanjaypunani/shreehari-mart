@@ -91,3 +91,4 @@ temp/
 
 # Uploaded files
 uploads/
+.vercel

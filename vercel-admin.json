@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "buildCommand": "npx nx build admin",
+  "outputDirectory": "dist/apps/admin",
+  "framework": "vite",
+  "installCommand": "npm install",
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}

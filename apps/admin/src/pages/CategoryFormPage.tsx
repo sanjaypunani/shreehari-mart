@@ -112,6 +112,7 @@ export const CategoryFormPage: React.FC = () => {
       variant: 'brand',
       type: 'submit',
       loading: loading,
+      onClick: () => {},
     },
   ];
 

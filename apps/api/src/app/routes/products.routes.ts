@@ -4,6 +4,12 @@ import { upload } from '../middleware/upload.middleware';
 
 const router = Router();
 
+const mapProduct = (product: any) => ({
+  ...product,
+  categoryId: product.category?.id ?? product.categoryId ?? null,
+  categoryName: product.category?.name ?? null,
+});
+
 // Get all products with pagination and filters
 router.get('/', async (req, res) => {
   try {
@@ -34,7 +40,7 @@ router.get('/', async (req, res) => {
 
     res.json({
       success: true,
-      data: products,
+      data: products.map(mapProduct),
       pagination: {
         page,
         limit,
@@ -69,7 +75,7 @@ router.get('/:id', async (req, res) => {
 
     res.json({
       success: true,
-      data: product,
+      data: mapProduct(product),
     });
   } catch (error) {
     console.error('Error fetching product:', error);
@@ -105,7 +111,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Product created successfully',
-      data: product,
+      data: mapProduct(product),
     });
   } catch (error) {
     console.error('Error creating product:', error);
@@ -157,7 +163,7 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     res.json({
       success: true,
       message: 'Product updated successfully',
-      data: product,
+      data: mapProduct(product),
     });
   } catch (error) {
     console.error('Error updating product:', error);
@@ -216,7 +222,7 @@ router.patch('/:id/availability', async (req, res) => {
     res.json({
       success: true,
       message: `Product availability toggled to ${product.isAvailable ? 'available' : 'unavailable'}`,
-      data: product,
+      data: mapProduct(product),
     });
   } catch (error) {
     console.error('Error toggling product availability:', error);

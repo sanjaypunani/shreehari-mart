@@ -9,10 +9,10 @@ import {
   Button,
   Alert,
 } from '@mantine/core';
-import { IconArrowLeft } from '@tabler/icons-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { colors, spacing, typography, radius } from '../../../theme';
 import { Text } from '../../../components/ui';
+import { StickyPageHeader } from '../../../components/navigation/StickyPageHeader';
 import { authApi, buildingsApi, societiesApi } from '../../../lib/api/services';
 import { getErrorMessage } from '../../../lib/api-client';
 import { useAppStore } from '../../../store/app-store';
@@ -173,35 +173,25 @@ function SignupPageContent() {
 
   return (
     <Box
-      px={spacing.md}
       style={{
         minHeight: 'var(--app-viewport-height)',
         backgroundColor: colors.background,
-        paddingTop: spacing.md,
         paddingBottom: `calc(${spacing.xl} + var(--safe-area-bottom-with-keyboard))`,
         scrollPaddingBottom: 'calc(140px + var(--safe-area-bottom-with-keyboard))',
       }}
     >
-      <Stack gap={spacing.lg}>
-        <Box
-          onClick={() => router.back()}
-          style={{ cursor: 'pointer', width: 'fit-content' }}
-        >
-          <IconArrowLeft size={24} color={colors.text.primary} />
-        </Box>
-
-        <Stack gap={spacing.xs}>
-          <Text
-            size="xl"
-            fw={typography.fontWeight.bold}
-            style={{ textTransform: 'uppercase' }}
-          >
-            Complete Signup
-          </Text>
+      <StickyPageHeader
+        title="Complete Signup"
+        onBack={() => router.back()}
+      >
+        <Stack gap={2}>
           <Text variant="secondary" size="sm">
             Add your details for +91-{phone}
           </Text>
         </Stack>
+      </StickyPageHeader>
+
+      <Stack gap={spacing.lg} px={spacing.md} pt={spacing.md}>
 
         {errorMessage && <Alert color="red">{errorMessage}</Alert>}
 

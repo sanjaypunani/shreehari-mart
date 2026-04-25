@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Modal,
   Box,
@@ -30,6 +30,7 @@ export function ProductSearchDialog({ opened, onClose }: ProductSearchDialogProp
   const [searchValue, setSearchValue] = useState('');
   const [drawerOpened, setDrawerOpened] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>();
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const isSearchReady = searchValue.trim().length >= 2;
 
@@ -67,6 +68,18 @@ export function ProductSearchDialog({ opened, onClose }: ProductSearchDialogProp
     onClose();
   };
 
+  useEffect(() => {
+    if (!opened) return;
+
+    const focusTimer = window.setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 220);
+
+    return () => {
+      window.clearTimeout(focusTimer);
+    };
+  }, [opened]);
+
   return (
     <>
       <Modal
@@ -88,13 +101,14 @@ export function ProductSearchDialog({ opened, onClose }: ProductSearchDialogProp
         {/* Header */}
         <Box
           style={{
-            backgroundColor: colors.surface,
+            backgroundColor: 'rgba(245, 248, 252, 0.96)',
             padding: `${spacing.sm} ${spacing.md}`,
             borderBottom: `1px solid ${colors.border}`,
             flexShrink: 0,
             position: 'sticky',
             top: 0,
             zIndex: 10,
+            backdropFilter: 'blur(8px)',
           }}
         >
           <Group gap={spacing.sm} align="center" wrap="nowrap">
@@ -104,10 +118,13 @@ export function ProductSearchDialog({ opened, onClose }: ProductSearchDialogProp
               onClick={handleClose}
               aria-label="Go back"
               style={{ color: colors.text.primary, flexShrink: 0 }}
+              radius="xl"
+              size={44}
             >
               <IconArrowLeft size={24} />
             </ActionIcon>
             <TextInput
+              ref={searchInputRef}
               style={{ flex: 1 }}
               leftSection={<IconSearch size={18} color={colors.text.secondary} />}
               placeholder="Search products..."
@@ -118,9 +135,10 @@ export function ProductSearchDialog({ opened, onClose }: ProductSearchDialogProp
                 input: {
                   backgroundColor: colors.background,
                   border: `1px solid ${colors.border}`,
-                  borderRadius: radius.md,
+                  borderRadius: radius.lg,
                   color: colors.text.primary,
                   fontSize: typography.fontSize.base,
+                  minHeight: '44px',
                   '&:focus': {
                     borderColor: colors.primary,
                   },
@@ -167,12 +185,13 @@ export function ProductSearchDialog({ opened, onClose }: ProductSearchDialogProp
                   <Card
                     key={product.id}
                     padding={spacing.sm}
-                    radius="md"
+                    radius="lg"
                     withBorder
                     style={{
                       cursor: 'pointer',
                       backgroundColor: colors.surface,
                       borderColor: colors.border,
+                      boxShadow: '0 10px 20px rgba(15, 23, 42, 0.08)',
                     }}
                     onClick={() => handleProductClick(product.id)}
                   >

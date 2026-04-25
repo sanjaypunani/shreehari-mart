@@ -1,5 +1,8 @@
 export const typography = {
-  fontFamily: "'Inter', 'Poppins', sans-serif",
+  fontFamily:
+    "var(--font-body), 'Nunito Sans', 'Avenir Next', 'Segoe UI', sans-serif",
+  headingFontFamily:
+    "var(--font-heading), 'Rubik', 'Avenir Next', 'Segoe UI', sans-serif",
   fontSize: {
     xs: '0.75rem',
     sm: '0.875rem',

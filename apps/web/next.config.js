@@ -1,22 +1,23 @@
 //@ts-check
 
-const { composePlugins, withNx } = require('@nx/next');
-
 /**
- * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
+ * @type {import('next').NextConfig}
  **/
 const nextConfig = {
-  nx: /** @type {any} */ ({
-    svgr: false,
-  }),
+  turbopack: {},
+  transpilePackages: [
+    '@shreehari/types',
+    '@shreehari/ui',
+    '@shreehari/design-system',
+    '@shreehari/utils',
+    '@shreehari/data-access',
+    '@shreehari/server-utils',
+  ],
 };
-
-// Compose with explicit base config
-const plugins = [withNx];
 
 const withPWA = require("@ducanh2912/next-pwa").default({
   dest: "public",
   register: true,
 });
 
-module.exports = composePlugins(...plugins)(withPWA(nextConfig));
+module.exports = withPWA(nextConfig);

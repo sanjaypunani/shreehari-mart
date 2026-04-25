@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "installCommand": "npm install",
+  "builds": [
+    {
+      "src": "dist/vercel-api/vercel.js",
+      "use": "@vercel/node",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/dist/vercel-api/vercel.js"
+    }
+  ]
+}

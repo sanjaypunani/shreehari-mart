@@ -24,11 +24,11 @@ export function ProductGrid({
   title = 'Fresh Veggies',
   products,
   columns = {
-    base: 3,
-    xs: 3,
+    base: 2,
+    xs: 2,
     sm: 3,
     md: 3,
-    lg: 3,
+    lg: 4,
   },
   onProductClick,
   onAddToCart,
@@ -36,9 +36,8 @@ export function ProductGrid({
   return (
     <Box
       style={{
-        backgroundColor: colors.background,
-        paddingLeft: spacing.md,
-        paddingRight: spacing.md,
+        backgroundColor: 'transparent',
+        paddingInline: spacing.xs,
       }}
     >
       <Stack gap={spacing.sm}>
@@ -49,7 +48,8 @@ export function ProductGrid({
             fw={typography.fontWeight.bold}
             variant="primary"
             style={{
-              fontSize: '18px',
+              fontSize: '20px',
+              letterSpacing: '-0.02em',
             }}
           >
             {title}
@@ -59,7 +59,7 @@ export function ProductGrid({
         {/* Product Grid */}
         <SimpleGrid
           cols={columns}
-          spacing={spacing.sm}
+          spacing={spacing.xs}
           style={{
             width: '100%',
           }}

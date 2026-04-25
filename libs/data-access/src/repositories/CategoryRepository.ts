@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { Category } from '../entities/Category';
 import { AppDataSource } from '../database/config';
 
@@ -58,7 +58,7 @@ export class CategoryRepository {
   async create(
     data: Pick<Category, 'name'> & { imageUrl?: string }
   ): Promise<Category> {
-    return AppDataSource.transaction(async (manager) => {
+    return AppDataSource.transaction(async (manager: EntityManager) => {
       // Shift all existing rows up by 1
       await manager
         .createQueryBuilder()
@@ -78,7 +78,7 @@ export class CategoryRepository {
    * Throws ReorderValidationError for validation failures.
    */
   async reorder(orderedIds: string[]): Promise<void> {
-    await AppDataSource.transaction(async (manager) => {
+    await AppDataSource.transaction(async (manager: EntityManager) => {
       // Guard: non-empty list required to avoid generating invalid SQL
       if (orderedIds.length === 0) {
         throw new ReorderValidationError('The provided ID list must not be empty.');
@@ -95,7 +95,7 @@ export class CategoryRepository {
         .select('category.id')
         .getMany();
 
-      const existingIdSet = new Set(existing.map((c) => c.id));
+      const existingIdSet = new Set(existing.map((c: Category) => c.id));
 
       // Validate: submitted list must contain exactly the same IDs
       if (

@@ -12,6 +12,7 @@ import {
 } from '@tabler/icons-react';
 import { colors, shadow, typography } from '../theme';
 import { Text } from './ui';
+import { useCategories } from '../hooks/use-api';
 
 type TabKey = 'home' | 'shop' | 'orders' | 'account';
 
@@ -46,7 +47,13 @@ function BottomTabNavigationContent() {
   const pathname = usePathname() || '/';
   const searchParams = useSearchParams();
   const activeTab = getActiveTab(pathname, searchParams.get('section'));
-  const categoryHref = pathname.startsWith('/category/') ? pathname : '/category/1';
+  const { data: categoriesResponse } = useCategories();
+  const firstCategoryId = categoriesResponse?.data?.[0]?.id;
+  const categoryHref = pathname.startsWith('/category/')
+    ? pathname
+    : firstCategoryId
+      ? `/category/${firstCategoryId}`
+      : '/';
 
   const tabs: BottomTabItem[] = [
     { key: 'home', label: 'Home', href: '/', icon: IconHome2 },
@@ -60,18 +67,22 @@ function BottomTabNavigationContent() {
       hiddenFrom="sm"
       style={{
         position: 'fixed',
-        left: 0,
-        right: 0,
+        left: 'max(10px, var(--safe-area-left))',
+        right: 'max(10px, var(--safe-area-right))',
         bottom: 0,
         zIndex: 1100,
         height: 'var(--mobile-bottom-tabs-total-height)',
-        paddingBottom: 'var(--safe-area-bottom)',
-        paddingLeft: 'max(12px, var(--safe-area-left))',
-        paddingRight: 'max(12px, var(--safe-area-right))',
+        paddingBottom: 'var(--mobile-bottom-tabs-bottom-padding)',
+        paddingLeft: 10,
+        paddingRight: 10,
         borderTop: `1px solid ${colors.border}`,
-        backgroundColor: 'rgba(255, 255, 255, 0.96)',
-        backdropFilter: 'blur(10px)',
-        boxShadow: `0 -4px 14px rgba(0, 0, 0, 0.08), ${shadow.sm}`,
+        borderLeft: `1px solid ${colors.border}`,
+        borderRight: `1px solid ${colors.border}`,
+        borderTopLeftRadius: 18,
+        borderTopRightRadius: 18,
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        backdropFilter: 'blur(12px)',
+        boxShadow: `0 -10px 26px rgba(15, 23, 42, 0.12), ${shadow.sm}`,
       }}
     >
       <Group
@@ -93,13 +104,16 @@ function BottomTabNavigationContent() {
               href={tab.href}
               style={{
                 minHeight: 'var(--mobile-bottom-tabs-height)',
+                minWidth: 'var(--touch-target-size)',
                 borderRadius: 12,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: isActive ? `${colors.primary}1A` : 'transparent',
+                background: isActive
+                  ? 'linear-gradient(145deg, rgba(31, 122, 99, 0.2), rgba(31, 122, 99, 0.08))'
+                  : 'transparent',
                 color,
-                transition: 'background-color 120ms ease',
+                transition: 'all 180ms ease',
               }}
             >
               <Stack gap={2} align="center" justify="center">

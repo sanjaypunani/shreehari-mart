@@ -2,7 +2,6 @@
 
 import React from 'react';
 import {
-  ActionIcon,
   Alert,
   Box,
   Button,
@@ -13,10 +12,11 @@ import {
   Stack,
   ThemeIcon,
 } from '@mantine/core';
-import { IconArrowLeft, IconCreditCard, IconWallet } from '@tabler/icons-react';
+import { IconCreditCard, IconWallet } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { colors, radius, spacing, typography } from '../../../theme';
 import { Text } from '../../../components/ui';
+import { StickyPageHeader } from '../../../components/navigation/StickyPageHeader';
 import { authApi, customersApi } from '../../../lib/api/services';
 import { getErrorMessage } from '../../../lib/api-client';
 import { useAuth } from '../../../store/app-store';
@@ -116,25 +116,7 @@ export default function WalletPage() {
       pb={`calc(90px + var(--safe-area-bottom))`}
       style={{ minHeight: '100vh', backgroundColor: '#f2f5f7' }}
     >
-      <Box
-        px={spacing.md}
-        pb={spacing.lg}
-        style={{
-          backgroundColor: colors.background,
-          borderBottom: `1px solid ${colors.border}`,
-          paddingTop: 'calc(var(--safe-area-top) + 12px)',
-        }}
-      >
-        <Group justify="space-between" align="center">
-          <ActionIcon variant="subtle" onClick={() => router.back()}>
-            <IconArrowLeft size={22} color={colors.text.primary} />
-          </ActionIcon>
-          <Text size="lg" fw={typography.fontWeight.bold}>
-            Wallet
-          </Text>
-          <Box w={34} />
-        </Group>
-      </Box>
+      <StickyPageHeader title="Wallet" onBack={() => router.back()} />
 
       <Stack p={spacing.md} gap={spacing.md}>
         {errorMessage && <Alert color="red">{errorMessage}</Alert>}

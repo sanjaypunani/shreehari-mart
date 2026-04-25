@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
-import { ActionIcon, Alert, Box, Button, Card, Divider, Group, Loader, Stack, ThemeIcon } from '@mantine/core';
-import { IconArrowLeft, IconReceiptRupee } from '@tabler/icons-react';
+import { Alert, Box, Button, Card, Divider, Group, Loader, Stack, ThemeIcon } from '@mantine/core';
+import { IconReceiptRupee } from '@tabler/icons-react';
 import { useParams, useRouter } from 'next/navigation';
 import { colors, radius, spacing, typography } from '../../../../theme';
 import { Text } from '../../../../components/ui';
 import { ConfirmDialog } from '../../../../components/ui/Modal';
+import { StickyPageHeader } from '../../../../components/navigation/StickyPageHeader';
 import { getErrorMessage } from '../../../../lib/api-client';
 import { ordersApi } from '../../../../lib/api/services';
 import { useAuth } from '../../../../store/app-store';
@@ -280,25 +281,7 @@ export default function OrderDetailsPage() {
       pb={`calc(90px + var(--safe-area-bottom))`}
       style={{ minHeight: '100vh', backgroundColor: '#f2f5f7' }}
     >
-      <Box
-        px={spacing.md}
-        pb={spacing.lg}
-        style={{
-          backgroundColor: colors.background,
-          borderBottom: `1px solid ${colors.border}`,
-          paddingTop: 'calc(var(--safe-area-top) + 12px)',
-        }}
-      >
-        <Group justify="space-between" align="center">
-          <ActionIcon variant="subtle" onClick={() => router.back()}>
-            <IconArrowLeft size={22} color={colors.text.primary} />
-          </ActionIcon>
-          <Text size="lg" fw={typography.fontWeight.bold}>
-            Order Details
-          </Text>
-          <Box w={34} />
-        </Group>
-      </Box>
+      <StickyPageHeader title="Order Details" onBack={() => router.back()} />
 
       <Stack p={spacing.md} gap={spacing.md}>
         {errorMessage && <Alert color="red">{errorMessage}</Alert>}

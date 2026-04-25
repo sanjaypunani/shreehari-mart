@@ -10,6 +10,7 @@ import {
   Badge,
   Select,
 } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { IconX, IconChevronDown } from '@tabler/icons-react';
 import { colors, spacing, radius, shadow, typography } from '../../theme';
 import { Text, Image, Button } from '../ui';
@@ -44,7 +45,10 @@ export function ProductDetailDrawer({
   onClose,
   product,
 }: ProductDetailDrawerProps) {
-  console.log('ProductDetailDrawer render - product:', product);
+  const drawerContentHeight = 220;
+  const topContentPadding = `calc(${spacing.lg} + ${spacing.sm})`;
+  const safeBottomPadding = `calc(var(--safe-area-bottom) + ${spacing.xl} + ${spacing.sm})`;
+
   // Hooks must be called before any conditional returns
   const addItem = useCartStore((state) => state.addItem);
 
@@ -125,12 +129,12 @@ export function ProductDetailDrawer({
 
   const [selectedVariant, setSelectedVariant] = React.useState('');
 
-  // Update selected variant when product or quantityOptions change
+  // Reset selected variant whenever the product changes
   React.useEffect(() => {
-    if (quantityOptions.length > 0 && !selectedVariant) {
+    if (quantityOptions.length > 0) {
       setSelectedVariant(quantityOptions[0].value);
     }
-  }, [quantityOptions, selectedVariant]);
+  }, [product?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentVariant = React.useMemo(() => {
     return (
@@ -167,14 +171,13 @@ export function ProductDetailDrawer({
       opened={opened}
       onClose={onClose}
       position="bottom"
-      size={160}
+      size={`calc(${drawerContentHeight}px + var(--safe-area-bottom))`}
       withCloseButton={false}
       zIndex={1100}
       styles={{
         body: {
           padding: 0,
-          height: '160px',
-          paddingBottom: 'var(--safe-area-bottom)',
+          height: `calc(${drawerContentHeight}px + var(--safe-area-bottom))`,
         },
         content: {
           borderTopLeftRadius: radius.xl,
@@ -187,8 +190,11 @@ export function ProductDetailDrawer({
           backgroundColor: colors.background,
           borderTopLeftRadius: radius.xl,
           borderTopRightRadius: radius.xl,
-          height: '160px',
-          padding: spacing.lg,
+          height: '100%',
+          paddingTop: topContentPadding,
+          paddingRight: spacing.lg,
+          paddingLeft: spacing.lg,
+          paddingBottom: safeBottomPadding,
           position: 'relative',
         }}
       >
@@ -328,9 +334,9 @@ export function ProductDetailDrawer({
                 rightSection={<IconChevronDown size={14} />}
                 styles={{
                   input: {
-                    height: 28,
-                    minHeight: 28,
-                    fontSize: '12px',
+                    height: 40,
+                    minHeight: 40,
+                    fontSize: '13px',
                     fontWeight: typography.fontWeight.semibold,
                     borderColor: colors.border,
                     borderRadius: radius.sm,
@@ -338,19 +344,19 @@ export function ProductDetailDrawer({
                     paddingRight: spacing.sm,
                   },
                   section: {
-                    width: 20,
+                    width: 26,
                   },
                   dropdown: {
                     borderRadius: radius.md,
                     border: `1px solid ${colors.border}`,
                   },
                   option: {
-                    fontSize: '12px',
+                    fontSize: '13px',
                     padding: spacing.sm,
                   },
                 }}
                 comboboxProps={{
-                  width: 100,
+                  width: 132,
                   position: 'bottom-start',
                 }}
               />
@@ -376,6 +382,12 @@ export function ProductDetailDrawer({
                     isAvailable: true,
                     selectedVariant: selectedVariant,
                   });
+                  notifications.show({
+                    color: 'green',
+                    title: 'Added to cart',
+                    message: `${product.name} (${currentVariant.label}) added to your cart`,
+                    autoClose: 2000,
+                  });
                   onClose();
                 }}
                 style={{
@@ -388,10 +400,11 @@ export function ProductDetailDrawer({
                     backgroundColor: colors.primary,
                     color: colors.text.inverse,
                     fontWeight: typography.fontWeight.semibold,
-                    fontSize: '12px',
-                    height: 28,
-                    paddingLeft: spacing.md,
-                    paddingRight: spacing.md,
+                    fontSize: '13px',
+                    height: 40,
+                    minWidth: 92,
+                    paddingLeft: spacing.lg,
+                    paddingRight: spacing.lg,
                     borderRadius: radius.sm,
                     pointerEvents: 'none',
                   }}

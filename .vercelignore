@@ -1,0 +1,5 @@
+.nx
+dist/apps
+dist/libs
+dist/out-tsc
+node_modules

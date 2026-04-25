@@ -34,6 +34,7 @@ const fileFilter = (
     'image/png',
     'image/webp',
     'image/gif',
+    'image/avif',
   ];
 
   if (allowedMimeTypes.includes(file.mimetype)) {
@@ -41,7 +42,7 @@ const fileFilter = (
   } else {
     cb(
       new Error(
-        'Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed.'
+        'Invalid file type. Only JPEG, PNG, WebP, GIF, and AVIF images are allowed.'
       )
     );
   }

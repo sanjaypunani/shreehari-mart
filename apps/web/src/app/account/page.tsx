@@ -3,13 +3,12 @@
 import React from 'react';
 import {
   ActionIcon,
+  Avatar,
   Badge,
   Box,
   Button,
   Card,
-  Divider,
   Group,
-  Menu,
   SimpleGrid,
   Skeleton,
   Stack,
@@ -17,19 +16,16 @@ import {
   UnstyledButton,
 } from '@mantine/core';
 import {
-  IconArrowLeft,
   IconCalendarStats,
   IconChevronRight,
-  IconDotsVertical,
   IconEdit,
   IconLogout,
   IconShoppingBag,
-  IconTruckDelivery,
   IconWallet,
 } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { colors, radius, shadow, spacing, typography } from '../../theme';
+import { colors, radius, spacing, typography } from '../../theme';
 import { Text } from '../../components/ui';
 import { ConfirmDialog } from '../../components/ui/Modal';
 import { LoginBottomSheet } from '../../components/auth/LoginBottomSheet';
@@ -65,7 +61,7 @@ interface AccountOrder {
   }>;
 }
 
-const standardCardShadow = '0 4px 12px rgba(0,0,0,0.06)';
+const standardCardShadow = '0 8px 20px rgba(15, 23, 42, 0.08)';
 
 const hexToRgb = (hex: string) => {
   const trimmed = hex.replace('#', '').trim();
@@ -100,22 +96,6 @@ const withOpacity = (hex: string, alpha: number) => {
   }
 
   return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
-};
-
-const mixHex = (source: string, target: string, weight: number) => {
-  const sourceRgb = hexToRgb(source);
-  const targetRgb = hexToRgb(target);
-
-  if (!sourceRgb || !targetRgb) {
-    return source;
-  }
-
-  const mix = (start: number, end: number) =>
-    Math.round(start + (end - start) * weight)
-      .toString(16)
-      .padStart(2, '0');
-
-  return `#${mix(sourceRgb.r, targetRgb.r)}${mix(sourceRgb.g, targetRgb.g)}${mix(sourceRgb.b, targetRgb.b)}`;
 };
 
 const formatCurrency = (amount: number) =>
@@ -167,8 +147,8 @@ const statusToneMap: Record<
 > = {
   pending: {
     text: '#9a6a00',
-    background: withOpacity(colors.secondary, 0.36),
-    border: withOpacity('#b88900', 0.45),
+    background: withOpacity(colors.warning, 0.2),
+    border: withOpacity('#b88900', 0.36),
   },
   out_for_delivery: {
     text: '#1d4ed8',
@@ -186,9 +166,6 @@ const statusToneMap: Record<
     border: withOpacity(colors.error, 0.3),
   },
 };
-
-const isActiveOrder = (status: AccountOrderStatus) =>
-  status === 'pending' || status === 'out_for_delivery';
 
 function AccountPageContent() {
   const router = useRouter();
@@ -349,27 +326,20 @@ function AccountPageContent() {
       ? `+91 ${auth.user.mobileNumber}`
       : '+91 00000 00000';
 
+  const initials = customerName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+
   const isMonthlyEnabled = !!profile?.customer?.isMonthlyPayment;
-  const activeOrder =
-    orders.find((order) => isActiveOrder(order.status)) || null;
-
-  const handleTrackOrder = () => {
-    if (!activeOrder) {
-      return;
-    }
-
-    document
-      .getElementById(`order-${activeOrder.id}`)
-      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
 
   if (!auth.isAuthenticated) {
-    const guestPrimaryDark = mixHex(colors.primary, '#000000', 0.25);
-
     return (
       <Box
-        pb={`calc(80px + var(--safe-area-bottom))`}
-        style={{ minHeight: '100vh', backgroundColor: colors.surface }}
+        pb={`calc(88px + var(--safe-area-bottom))`}
+        style={{ minHeight: 'var(--app-viewport-height)' }}
       >
         <LoginBottomSheet
           opened={loginOpen}
@@ -377,149 +347,80 @@ function AccountPageContent() {
           returnUrl="/account"
         />
 
-        <Box
-          px={spacing.md}
-          pb={spacing.md}
-          style={{
-            background: `radial-gradient(circle at 92% 2%, ${withOpacity(colors.secondary, 0.34)} 0%, transparent 34%), linear-gradient(160deg, ${colors.primary} 0%, ${guestPrimaryDark} 100%)`,
-            borderBottomLeftRadius: radius.lg,
-            borderBottomRightRadius: radius.lg,
-            boxShadow: shadow.md,
-            paddingTop: 'calc(var(--safe-area-top) + 12px)',
-          }}
-        >
-          <Group justify="space-between" mb={spacing.md}>
-            <ActionIcon
-              variant="subtle"
-              onClick={() => router.back()}
-              style={{ color: colors.text.inverse }}
-            >
-              <IconArrowLeft size={22} />
-            </ActionIcon>
-            <Text
-              size="lg"
-              fw={typography.fontWeight.bold}
-              style={{ color: colors.text.inverse }}
-            >
-              My Profile
-            </Text>
-            <Box w={34} />
-          </Group>
-
-          <Text
-            size="lg"
-            fw={typography.fontWeight.bold}
-            style={{ color: colors.text.inverse }}
-          >
-            Login to view your orders
-          </Text>
-        </Box>
-
-        <Stack p={spacing.md} gap={spacing.md}>
-          <Button
-            fullWidth
-            size="lg"
-            radius="md"
-            onClick={openLogin}
+        <Stack px={spacing.xs} py={spacing.sm} gap={spacing.sm}>
+          <Card
+            p={spacing.md}
             style={{
-              height: 48,
-              backgroundColor: colors.primary,
+              borderRadius: 24,
+              background:
+                'linear-gradient(145deg, rgba(31,122,99,0.92) 0%, rgba(24,97,79,1) 100%)',
               color: colors.text.inverse,
-              fontWeight: typography.fontWeight.bold,
+              boxShadow: '0 16px 28px rgba(31, 122, 99, 0.28)',
             }}
           >
-            Login / Signup
-          </Button>
+            <Group justify="center" mb={spacing.md}>
+              <Text size="sm" fw={typography.fontWeight.semibold}>
+                Account
+              </Text>
+            </Group>
+
+            <Stack gap={4}>
+              <Text
+                style={{
+                  fontSize: '24px',
+                  lineHeight: 1.1,
+                  fontWeight: typography.fontWeight.bold,
+                  color: colors.text.inverse,
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Login to manage your orders faster
+              </Text>
+              <Text size="sm" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                Track deliveries, reorder in one tap, and manage billing details.
+              </Text>
+            </Stack>
+          </Card>
+
+          <Card
+            p={spacing.md}
+            style={{
+              borderRadius: 20,
+              border: `1px solid ${colors.border}`,
+              backgroundColor: colors.surface,
+              boxShadow: standardCardShadow,
+            }}
+          >
+            <Button
+              fullWidth
+              size="md"
+              radius="xl"
+              onClick={openLogin}
+              style={{
+                minHeight: 'var(--touch-target-size)',
+                backgroundColor: colors.primary,
+                color: colors.text.inverse,
+                fontWeight: typography.fontWeight.bold,
+              }}
+            >
+              Login / Signup
+            </Button>
+          </Card>
         </Stack>
       </Box>
     );
   }
 
-  const headerPrimaryDark = mixHex(colors.primary, '#000000', 0.32);
-
   return (
     <Box
       pb={`calc(90px + var(--safe-area-bottom))`}
-      style={{ minHeight: '100vh', backgroundColor: colors.surface }}
+      style={{ minHeight: 'var(--app-viewport-height)' }}
     >
       <LoginBottomSheet
         opened={loginOpen}
         onClose={closeLogin}
         returnUrl="/account"
       />
-
-      <Box
-        px={spacing.md}
-        pb={spacing.md}
-        style={{
-          background: `radial-gradient(circle at 90% 8%, ${withOpacity(colors.secondary, 0.38)} 0%, transparent 30%), linear-gradient(152deg, ${colors.primary} 0%, ${headerPrimaryDark} 100%)`,
-          borderBottomLeftRadius: radius.lg,
-          borderBottomRightRadius: radius.lg,
-          boxShadow: shadow.md,
-          paddingTop: 'calc(var(--safe-area-top) + 10px)',
-        }}
-      >
-        <Group justify="space-between" mb={spacing.md}>
-          <ActionIcon
-            variant="subtle"
-            onClick={() => router.back()}
-            style={{ color: colors.text.inverse }}
-          >
-            <IconArrowLeft size={22} />
-          </ActionIcon>
-
-          <Menu shadow="md" width={200} position="bottom-end" withArrow>
-            <Menu.Target>
-              <ActionIcon
-                variant="light"
-                style={{
-                  backgroundColor: withOpacity(colors.text.inverse, 0.2),
-                  color: colors.text.inverse,
-                }}
-              >
-                <IconDotsVertical size={20} />
-              </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item
-                leftSection={<IconEdit size={16} />}
-                onClick={() => router.push('/account/edit')}
-              >
-                Edit Profile
-              </Menu.Item>
-              <Menu.Item
-                color="red"
-                leftSection={<IconLogout size={16} />}
-                onClick={logout}
-              >
-                Logout
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        </Group>
-
-        <Stack gap={4}>
-          {loadingProfile ? (
-            <>
-              <Skeleton height={26} width="48%" radius="sm" />
-              <Skeleton height={16} width="36%" radius="sm" />
-            </>
-          ) : (
-            <>
-              <Text
-                size="xl"
-                fw={typography.fontWeight.bold}
-                style={{ color: colors.text.inverse }}
-              >
-                {customerName}
-              </Text>
-              <Text size="sm" style={{ color: 'rgba(255,255,255,0.92)' }}>
-                {customerPhone}
-              </Text>
-            </>
-          )}
-        </Stack>
-      </Box>
 
       <ConfirmDialog
         isOpen={confirmOpen}
@@ -530,103 +431,188 @@ function AccountPageContent() {
         confirmText="Replace Cart"
         cancelText="Cancel"
         variant="warning"
-        loading={false}
+        loading={!!reorderingOrderId}
       />
 
-      <Stack px={spacing.md} mt={`calc(${spacing.lg} * -1)`} gap={spacing.md}>
+      <Stack px={spacing.xs} py={spacing.sm} gap={spacing.sm}>
         <Card
-          withBorder
           p={spacing.md}
           style={{
-            borderRadius: radius.lg,
-            borderColor: withOpacity(colors.primary, 0.14),
-            background: `linear-gradient(145deg, ${withOpacity(colors.primary, 0.04)} 0%, ${withOpacity(colors.secondary, 0.14)} 100%)`,
+            borderRadius: 24,
+            border: `1px solid ${withOpacity(colors.primary, 0.22)}`,
+            background:
+              'linear-gradient(152deg, rgba(31,122,99,0.97) 0%, rgba(23,96,78,1) 100%)',
+            boxShadow: '0 16px 28px rgba(31, 122, 99, 0.28)',
+          }}
+        >
+          <Group justify="space-between" align="center" mb={spacing.md}>
+            <Text
+              size="sm"
+              fw={typography.fontWeight.semibold}
+              style={{ color: 'rgba(255,255,255,0.92)' }}
+            >
+              Account
+            </Text>
+
+            <Button
+              variant="subtle"
+              leftSection={<IconLogout size={16} />}
+              onClick={logout}
+              style={{
+                minHeight: 'var(--touch-target-size)',
+                color: colors.text.inverse,
+                backgroundColor: 'rgba(255,255,255,0.14)',
+                borderRadius: radius.full,
+                fontWeight: typography.fontWeight.semibold,
+              }}
+            >
+              Logout
+            </Button>
+          </Group>
+
+          {loadingProfile ? (
+            <Stack gap={spacing.sm}>
+              <Skeleton height={56} radius="xl" />
+              <Skeleton height={14} width="50%" radius="sm" />
+            </Stack>
+          ) : (
+            <Group justify="space-between" align="center" wrap="nowrap">
+              <Group gap={spacing.sm} wrap="nowrap">
+                <Avatar
+                  radius="xl"
+                  size={56}
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.18)',
+                    color: colors.text.inverse,
+                    border: '1px solid rgba(255,255,255,0.28)',
+                    fontWeight: typography.fontWeight.bold,
+                  }}
+                >
+                  {initials || 'U'}
+                </Avatar>
+                <Stack gap={0}>
+                  <Text
+                    style={{
+                      fontSize: '22px',
+                      lineHeight: 1.12,
+                      fontWeight: typography.fontWeight.bold,
+                      color: colors.text.inverse,
+                      letterSpacing: '-0.02em',
+                    }}
+                  >
+                    {customerName}
+                  </Text>
+                  <Text size="sm" style={{ color: 'rgba(255,255,255,0.92)' }}>
+                    {customerPhone}
+                  </Text>
+                  <Badge
+                    radius="xl"
+                    size="sm"
+                    styles={{
+                      root: {
+                        marginTop: 6,
+                        backgroundColor: 'rgba(255,255,255,0.16)',
+                        color: colors.text.inverse,
+                        border: '1px solid rgba(255,255,255,0.24)',
+                      },
+                    }}
+                  >
+                    {isMonthlyEnabled ? 'Monthly billing enabled' : 'Pay per order'}
+                  </Badge>
+                </Stack>
+              </Group>
+
+              <ActionIcon
+                onClick={() => router.push('/account/edit')}
+                aria-label="Edit profile"
+                style={{
+                  width: 'var(--touch-target-size)',
+                  height: 'var(--touch-target-size)',
+                  borderRadius: radius.full,
+                  backgroundColor: 'rgba(255,255,255,0.17)',
+                  color: colors.text.inverse,
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  flexShrink: 0,
+                }}
+              >
+                <IconEdit size={18} />
+              </ActionIcon>
+            </Group>
+          )}
+        </Card>
+
+        <SimpleGrid cols={2} spacing={spacing.sm}>
+          <QuickActionTile
+            icon={<IconShoppingBag size={20} />}
+            label="My Orders"
+            description="Track and reorder quickly"
+            onClick={scrollToOrders}
+          />
+          <QuickActionTile
+            icon={<IconWallet size={20} />}
+            label="Wallet"
+            description="Balance and transactions"
+            onClick={() => router.push('/account/wallet')}
+          />
+          <QuickActionTile
+            icon={<IconEdit size={20} />}
+            label="Edit Profile"
+            description="Update contact details"
+            onClick={() => router.push('/account/edit')}
+          />
+          <QuickActionTile
+            icon={<IconCalendarStats size={20} />}
+            label="Monthly Bill"
+            description={isMonthlyEnabled ? 'View current cycle' : 'Not enabled'}
+            disabled={!isMonthlyEnabled}
+            onClick={() => router.push('/account/monthly-billing')}
+          />
+        </SimpleGrid>
+
+        <Card
+          id="past-orders-section"
+          p={spacing.md}
+          style={{
+            borderRadius: 22,
+            border: `1px solid ${colors.border}`,
+            backgroundColor: colors.surface,
             boxShadow: standardCardShadow,
           }}
         >
-          <SimpleGrid cols={2} spacing={spacing.sm}>
-            <QuickActionTile
-              icon={<IconShoppingBag size={22} />}
-              label="My Orders"
-              priority="primary"
-              onClick={scrollToOrders}
-            />
-            <QuickActionTile
-              icon={<IconWallet size={22} />}
-              label="Wallet Balance"
-              priority="primary"
-              onClick={() => router.push('/account/wallet')}
-            />
-            <QuickActionTile
-              icon={<IconEdit size={22} />}
-              label="Edit Profile"
-              onClick={() => router.push('/account/edit')}
-            />
-            <QuickActionTile
-              icon={<IconCalendarStats size={22} />}
-              label="Monthly Bill"
-              disabled={!isMonthlyEnabled}
-              onClick={() => router.push('/account/monthly-billing')}
-            />
-          </SimpleGrid>
-        </Card>
+          <Group justify="space-between" mb={spacing.sm}>
+            <Stack gap={0}>
+              <Text size="sm" fw={typography.fontWeight.bold}>
+                Order history
+              </Text>
+              <Text size="xs" variant="secondary">
+                {orders.length} {orders.length === 1 ? 'order' : 'orders'}
+              </Text>
+            </Stack>
+            <ThemeIcon
+              size={34}
+              radius="xl"
+              style={{
+                backgroundColor: withOpacity(colors.primary, 0.12),
+                color: colors.primary,
+              }}
+            >
+              <IconShoppingBag size={18} />
+            </ThemeIcon>
+          </Group>
 
-        {activeOrder && (
-          <Card
-            withBorder
-            p={spacing.md}
-            style={{
-              borderRadius: radius.lg,
-              borderColor: withOpacity('#2563eb', 0.2),
-              backgroundColor: colors.background,
-              boxShadow: standardCardShadow,
-            }}
-          >
-            <Group justify="space-between" align="center" gap={spacing.sm}>
-              <Stack gap={2}>
-                <Text size="sm" fw={typography.fontWeight.bold}>
-                  Active order #{activeOrder.id.slice(0, 8).toUpperCase()}
-                </Text>
-                <Text size="xs" variant="secondary">
-                  {statusLabelMap[activeOrder.status]}
-                </Text>
-              </Stack>
-              <Button
-                size="sm"
-                leftSection={<IconTruckDelivery size={16} />}
-                onClick={handleTrackOrder}
-                style={{
-                  minHeight: 44,
-                  borderRadius: radius.md,
-                  backgroundColor: '#2563eb',
-                  fontWeight: typography.fontWeight.semibold,
-                }}
-              >
-                Track Order
-              </Button>
-            </Group>
-          </Card>
-        )}
-
-        <InfoSection
-          id="past-orders-section"
-          title="Past Orders"
-          icon={<IconShoppingBag size={18} />}
-          actionLabel={`${orders.length} orders`}
-        >
           {loadingProfile || loadingOrders ? (
             <Stack gap={spacing.sm}>
               {[0, 1, 2].map((item) => (
                 <Card
                   key={item}
-                  p={spacing.md}
+                  p={spacing.sm}
                   style={{
                     borderRadius: radius.md,
                     border: `1px solid ${colors.border}`,
                     backgroundColor: colors.background,
                   }}
                 >
-                  <Stack gap={spacing.sm}>
+                  <Stack gap={spacing.xs}>
                     <Skeleton height={16} radius="sm" width="55%" />
                     <Skeleton height={12} radius="sm" width="40%" />
                     <Skeleton height={14} radius="sm" width="70%" />
@@ -645,19 +631,19 @@ function AccountPageContent() {
                 No orders yet
               </Text>
               <Text size="sm" variant="secondary" ta="center">
-                Start shopping fresh vegetables
+                Start shopping to see your order timeline here.
               </Text>
               <Button
                 size="sm"
-                onClick={() => router.push('/category/1')}
+                onClick={() => router.push('/')}
                 style={{
-                  minHeight: 44,
-                  borderRadius: radius.md,
+                  minHeight: 'var(--touch-target-size)',
+                  borderRadius: radius.full,
                   backgroundColor: colors.primary,
                   fontWeight: typography.fontWeight.semibold,
                 }}
               >
-                Browse Vegetables
+                Start Shopping
               </Button>
             </Stack>
           ) : (
@@ -676,19 +662,23 @@ function AccountPageContent() {
                   <Card
                     id={`order-${order.id}`}
                     key={order.id}
-                    p={spacing.md}
+                    p={spacing.sm}
                     style={{
-                      borderRadius: radius.md,
+                      borderRadius: 16,
                       border: `1px solid ${colors.border}`,
                       backgroundColor: colors.background,
-                      boxShadow: standardCardShadow,
                     }}
                   >
-                    <Stack gap={spacing.sm}>
-                      <Group justify="space-between" align="flex-start">
-                        <Text size="sm" fw={typography.fontWeight.semibold}>
-                          Order #{order.id.slice(0, 8).toUpperCase()}
-                        </Text>
+                    <Stack gap={spacing.xs}>
+                      <Group justify="space-between" align="flex-start" gap={spacing.xs}>
+                        <Stack gap={2}>
+                          <Text size="sm" fw={typography.fontWeight.semibold}>
+                            Order #{order.id.slice(0, 8).toUpperCase()}
+                          </Text>
+                          <Text size="xs" variant="secondary">
+                            Placed {formatDate(order.createdAt, { day: 'numeric', month: 'short' })}
+                          </Text>
+                        </Stack>
                         <Badge
                           size="sm"
                           radius="xl"
@@ -706,14 +696,6 @@ function AccountPageContent() {
                         </Badge>
                       </Group>
 
-                      <Text size="xs" variant="secondary">
-                        {statusLabel} •{' '}
-                        {formatDate(order.createdAt, {
-                          day: 'numeric',
-                          month: 'short',
-                        })}
-                      </Text>
-
                       <Group justify="space-between" align="center">
                         <Text size="sm" variant="secondary">
                           {itemsCount} {itemsCount === 1 ? 'item' : 'items'}
@@ -723,21 +705,20 @@ function AccountPageContent() {
                         </Text>
                       </Group>
 
-                      <Group grow>
+                      <Group grow mt={2}>
                         <Button
                           variant="default"
-                          onClick={() =>
-                            router.push(`/account/orders/${order.id}`)
-                          }
+                          rightSection={<IconChevronRight size={16} />}
+                          onClick={() => router.push(`/account/orders/${order.id}`)}
                           style={{
-                            minHeight: 44,
-                            borderRadius: radius.md,
+                            minHeight: 'var(--touch-target-size)',
+                            borderRadius: radius.full,
                             borderColor: withOpacity(colors.primary, 0.3),
                             color: colors.primary,
                             fontWeight: typography.fontWeight.semibold,
                           }}
                         >
-                          View Details
+                          Details
                         </Button>
 
                         <Button
@@ -746,8 +727,8 @@ function AccountPageContent() {
                           loading={reorderingOrderId === order.id}
                           disabled={!order.items?.length}
                           style={{
-                            minHeight: 44,
-                            borderRadius: radius.md,
+                            minHeight: 'var(--touch-target-size)',
+                            borderRadius: radius.full,
                             backgroundColor: colors.primary,
                             fontWeight: typography.fontWeight.semibold,
                           }}
@@ -761,7 +742,7 @@ function AccountPageContent() {
               })}
             </Stack>
           )}
-        </InfoSection>
+        </Card>
       </Stack>
     </Box>
   );
@@ -784,120 +765,55 @@ export default function AccountPage() {
 function QuickActionTile({
   icon,
   label,
+  description,
   onClick,
   disabled,
-  priority = 'secondary',
 }: {
   icon: React.ReactNode;
   label: string;
+  description: string;
   onClick: () => void;
   disabled?: boolean;
-  priority?: 'primary' | 'secondary';
 }) {
-  const isPrimary = priority === 'primary';
-  const iconBackground = disabled
-    ? withOpacity(colors.border, 0.5)
-    : isPrimary
-      ? withOpacity(colors.primary, 0.18)
-      : withOpacity(colors.primary, 0.1);
-  const tileBorder = disabled
-    ? colors.border
-    : isPrimary
-      ? withOpacity(colors.primary, 0.38)
-      : withOpacity(colors.primary, 0.2);
-
   return (
     <UnstyledButton
       onClick={onClick}
       disabled={disabled}
       style={{
-        border: `1px solid ${tileBorder}`,
-        borderRadius: radius.md,
-        minHeight: 92,
         width: '100%',
+        minHeight: 96,
         padding: spacing.sm,
-        backgroundColor: colors.background,
-        opacity: disabled ? 0.5 : 1,
+        borderRadius: 18,
+        border: `1px solid ${disabled ? colors.border : withOpacity(colors.primary, 0.2)}`,
+        backgroundColor: colors.surface,
+        boxShadow: disabled ? 'none' : standardCardShadow,
+        opacity: disabled ? 0.52 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer',
       }}
     >
-      <Stack align="center" justify="center" gap={8}>
-        <ThemeIcon
-          size={38}
-          radius="xl"
-          style={{
-            backgroundColor: iconBackground,
-            color: disabled ? colors.text.secondary : colors.primary,
-            border: `1px solid ${withOpacity(colors.secondary, 0.5)}`,
-          }}
-        >
-          {icon}
-        </ThemeIcon>
-        <Text
-          size="xs"
-          fw={
-            isPrimary
-              ? typography.fontWeight.bold
-              : typography.fontWeight.semibold
-          }
-          style={{ textAlign: 'center', lineHeight: 1.2 }}
-        >
-          {label}
-        </Text>
-      </Stack>
-    </UnstyledButton>
-  );
-}
-
-function InfoSection({
-  id,
-  title,
-  icon,
-  actionLabel,
-  children,
-}: {
-  id?: string;
-  title: string;
-  icon: React.ReactNode;
-  actionLabel: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Card
-      id={id}
-      withBorder
-      p={spacing.md}
-      style={{
-        borderRadius: radius.lg,
-        borderColor: withOpacity(colors.primary, 0.12),
-        backgroundColor: colors.background,
-        boxShadow: standardCardShadow,
-      }}
-    >
-      <Group justify="space-between" mb={spacing.sm}>
-        <Group gap={spacing.xs}>
+      <Group justify="space-between" align="center" wrap="nowrap">
+        <Group gap={spacing.sm} wrap="nowrap">
           <ThemeIcon
-            size={30}
+            size={40}
             radius="xl"
             style={{
-              backgroundColor: withOpacity(colors.primary, 0.14),
+              backgroundColor: withOpacity(colors.primary, 0.12),
               color: colors.primary,
             }}
           >
             {icon}
           </ThemeIcon>
-          <Text size="sm" fw={typography.fontWeight.bold}>
-            {title}
-          </Text>
+          <Stack gap={1} align="flex-start">
+            <Text size="sm" fw={typography.fontWeight.bold}>
+              {label}
+            </Text>
+            <Text size="xs" variant="secondary" ta="left" style={{ lineHeight: 1.2 }}>
+              {description}
+            </Text>
+          </Stack>
         </Group>
-        <Group gap={2}>
-          <Text size="xs" variant="secondary">
-            {actionLabel}
-          </Text>
-          <IconChevronRight size={16} color={colors.text.secondary} />
-        </Group>
+        <IconChevronRight size={16} color={colors.text.secondary} />
       </Group>
-      <Divider color={colors.border} mb={spacing.sm} />
-      {children}
-    </Card>
+    </UnstyledButton>
   );
 }

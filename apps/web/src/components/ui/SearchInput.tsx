@@ -36,6 +36,7 @@ export function SearchInput({
       color: colors.text.primary,
       fontSize: typography.fontSize.base,
       fontFamily: typography.fontFamily,
+      minHeight: 'var(--touch-target-size)',
       '&::placeholder': {
         color: colors.text.secondary,
         opacity: 0.6,

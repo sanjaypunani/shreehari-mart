@@ -23,13 +23,13 @@ export function CategoryGrid({
   title = 'Grocery & Kitchen',
   categories,
   onCategoryClick,
-  columns = { base: 4, xs: 4, sm: 6, md: 8, lg: 10 },
+  columns = { base: 4, xs: 4, sm: 5, md: 6, lg: 8 },
 }: CategoryGridProps) {
   return (
     <Box
       style={{
-        backgroundColor: colors.background,
-        padding: spacing.md,
+        backgroundColor: 'transparent',
+        paddingInline: spacing.xs,
       }}
     >
       {/* Section Title */}
@@ -39,8 +39,9 @@ export function CategoryGrid({
           fw={typography.fontWeight.semibold}
           variant="primary"
           style={{
-            marginBottom: spacing.sm,
-            fontSize: '16px',
+            marginBottom: spacing.xs,
+            fontSize: '17px',
+            letterSpacing: '-0.01em',
           }}
         >
           {title}

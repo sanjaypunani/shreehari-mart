@@ -10,10 +10,11 @@ import {
   PinInput,
   Alert,
 } from '@mantine/core';
-import { IconArrowLeft, IconDeviceMobile } from '@tabler/icons-react';
+import { IconDeviceMobile } from '@tabler/icons-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { colors, spacing, typography } from '../../../theme';
 import { Text } from '../../../components/ui';
+import { StickyPageHeader } from '../../../components/navigation/StickyPageHeader';
 import { authApi } from '../../../lib/api/services';
 import { getErrorMessage } from '../../../lib/api-client';
 import { useAppStore } from '../../../store/app-store';
@@ -34,8 +35,9 @@ function VerifyContent() {
 
   const isOtpValid = otp.length === 6;
 
-  const handleVerify = async () => {
-    if (!isOtpValid || isVerifying) {
+  const handleVerify = async (otpValue?: string) => {
+    const otpToVerify = otpValue ?? otp;
+    if (otpToVerify.length !== 6 || isVerifying) {
       return;
     }
 
@@ -45,7 +47,7 @@ function VerifyContent() {
 
       const response = await authApi.verifyOtp({
         mobileNumber: phone,
-        otp,
+        otp: otpToVerify,
       });
 
       const authenticatedUser = response.data.user;
@@ -83,10 +85,6 @@ function VerifyContent() {
     }
   };
 
-  const handleBack = () => {
-    router.back();
-  };
-
   const handleResend = async () => {
     if (!phone || isResending) {
       return;
@@ -105,39 +103,25 @@ function VerifyContent() {
 
   return (
     <Box
-      px={spacing.md}
       style={{
         minHeight: 'var(--app-viewport-height)',
         backgroundColor: colors.background,
-        paddingTop: spacing.md,
         paddingBottom: `calc(${spacing.md} + var(--safe-area-bottom-with-keyboard))`,
         scrollPaddingBottom: 'calc(120px + var(--safe-area-bottom-with-keyboard))',
       }}
     >
-      <Stack gap={spacing.xl}>
-        <Stack gap={spacing.xs}>
-          <Box
-            onClick={handleBack}
-            style={{
-              cursor: 'pointer',
-              marginBottom: spacing.xs,
-              width: 'fit-content',
-            }}
-          >
-            <IconArrowLeft size={24} color={colors.text.primary} />
-          </Box>
-
-          <Text
-            size="xl"
-            fw={typography.fontWeight.bold}
-            style={{ textTransform: 'uppercase' }}
-          >
-            Verify Details
-          </Text>
+      <StickyPageHeader
+        title="Verify Details"
+        onBack={() => router.back()}
+      >
+        <Stack gap={2}>
           <Text variant="secondary" size="sm">
             OTP sent to +91-{phone}
           </Text>
         </Stack>
+      </StickyPageHeader>
+
+      <Stack gap={spacing.xl} px={spacing.md} pt={spacing.md}>
 
         {debugOtp && (
           <Alert color="orange" radius="md">
@@ -181,6 +165,7 @@ function VerifyContent() {
                     setErrorMessage(null);
                   }
                 }}
+                onComplete={(value) => handleVerify(value)}
                 autoFocus
                 styles={{
                   input: {
@@ -221,7 +206,7 @@ function VerifyContent() {
           radius="md"
           disabled={!isOtpValid || isVerifying}
           loading={isVerifying}
-          onClick={handleVerify}
+          onClick={() => handleVerify()}
           styles={{
             root: {
               height: '50px',

@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import { Box, Group, ActionIcon, ScrollArea, Skeleton, SimpleGrid } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconArrowLeft, IconSearch } from '@tabler/icons-react';
+import { IconSearch } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { colors, spacing, typography } from '../../theme';
 import { Text } from '../ui';
 import { ProductGrid, ProductDetailDrawer } from '../products';
 import { CategorySidebar } from './CategorySidebar';
 import { ProductSearchDialog } from '../search';
+import { StickyPageHeader } from '../navigation/StickyPageHeader';
 import { useProducts, useCategory, useCategories } from '../../hooks/use-api';
 import { ProductDto } from '@shreehari/types';
 import { useCartStore } from '../../store';
@@ -51,9 +52,9 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
       price: parseFloat(apiProduct.price.toString()),
       baseQuantity: apiProduct.quantity,
       unit: apiProduct.unit,
-      discount: 30, // Mock discount
+      discount: apiProduct.discount ?? undefined,
       quantity: `${apiProduct.quantity}${apiProduct.unit}`,
-      deliveryTime: '20 MINS', // Mock delivery time
+      deliveryTime: '30 mins',
     })
   );
 
@@ -106,40 +107,33 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
         flexDirection: 'column',
       }}
     >
-      {/* Header */}
-      <Box
-        style={{
-          backgroundColor: colors.surface,
-          padding: `${spacing.sm} ${spacing.md}`,
-          borderBottom: `1px solid ${colors.border}`,
-          zIndex: 100,
-        }}
-      >
-        <Group justify="space-between" align="center">
-          <Group gap={spacing.sm}>
-            <ActionIcon
-              variant="transparent"
-              color="dark"
-              onClick={() => router.push('/')}
-              style={{ color: colors.text.primary }}
-            >
-              <IconArrowLeft size={24} />
-            </ActionIcon>
-            <Text size="lg" fw={typography.fontWeight.bold} variant="primary">
-              {categoryLoading ? <Skeleton height={20} width={120} /> : categoryName}
-            </Text>
-          </Group>
-          
+      <StickyPageHeader
+        title={
+          categoryLoading ? (
+            <Skeleton height={20} width={120} radius="sm" />
+          ) : (
+            categoryName
+          )
+        }
+        onBack={() => router.push('/')}
+        rightSlot={
           <ActionIcon
-            variant="transparent"
-            color="dark"
+            variant="subtle"
             onClick={openSearch}
             aria-label="Search products"
+            style={{
+              width: 'var(--touch-target-size)',
+              height: 'var(--touch-target-size)',
+              borderRadius: '9999px',
+              border: `1px solid ${colors.border}`,
+              backgroundColor: colors.surface,
+              color: colors.text.primary,
+            }}
           >
-            <IconSearch size={24} />
+            <IconSearch size={21} />
           </ActionIcon>
-        </Group>
-      </Box>
+        }
+      />
 
       {/* Main Content Area */}
       <Box style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -151,7 +145,14 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
         />
 
         {/* Product Area */}
-        <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'white' }}>
+        <Box
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: 'transparent',
+          }}
+        >
             {/* Product Grid */}
             <ScrollArea style={{ flex: 1 }} p={spacing.sm}>
                 {isLoading ? (
@@ -172,7 +173,7 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
                 <Box
                   h={
                     hasCartItems
-                      ? 'calc(92px + var(--mobile-bottom-tabs-total-height))'
+                      ? 'calc(76px + var(--mobile-bottom-tabs-total-height))'
                       : 'var(--mobile-bottom-tabs-total-height)'
                   }
                 />

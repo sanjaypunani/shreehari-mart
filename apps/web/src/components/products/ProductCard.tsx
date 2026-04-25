@@ -4,7 +4,7 @@ import React from 'react';
 import { Box, Stack, Group, ActionIcon } from '@mantine/core';
 import { IconPlus, IconClock } from '@tabler/icons-react';
 import { colors, spacing, radius, shadow, typography } from '../../theme';
-import { Text, Image, Badge } from '../ui';
+import { Text, Image } from '../ui';
 
 export interface ProductCardProps {
   id: string;
@@ -35,12 +35,17 @@ export function ProductCard({
   return (
     <Box
       style={{
-        backgroundColor: 'white',
+        backgroundColor: colors.surface,
         position: 'relative',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'visible',
+        overflow: 'hidden',
+        border: `1px solid ${colors.border}`,
+        borderRadius: radius.lg,
+        boxShadow: shadow.sm,
+        padding: spacing.xs,
+        cursor: 'pointer',
       }}
     >
       {/* Product Image Container */}
@@ -50,9 +55,33 @@ export function ProductCard({
           aspectRatio: '1',
           position: 'relative',
           marginBottom: spacing.xs,
+          borderRadius: radius.md,
+          overflow: 'hidden',
+          background:
+            'linear-gradient(180deg, rgba(236, 244, 242, 0.9) 0%, rgba(255, 255, 255, 1) 100%)',
         }}
         onClick={() => onClick?.(id)}
       >
+        {discount && (
+          <Box
+            style={{
+              position: 'absolute',
+              top: spacing.xs,
+              left: spacing.xs,
+              zIndex: 9,
+              backgroundColor: `${colors.secondary}`,
+              color: colors.text.inverse,
+              borderRadius: radius.full,
+              padding: '4px 8px',
+              fontSize: '10px',
+              fontWeight: typography.fontWeight.bold,
+              letterSpacing: '0.01em',
+            }}
+          >
+            {discount}% OFF
+          </Box>
+        )}
+
         <Image
           src={image}
           alt={name}
@@ -67,39 +96,49 @@ export function ProductCard({
         <Box
           style={{
             position: 'absolute',
-            top: 0,
-            right: 0,
+            right: spacing.xs,
+            bottom: spacing.xs,
             zIndex: 10,
           }}
         >
           <ActionIcon
-            size={32}
-            radius="md"
-            variant="outline"
+            size={44}
+            radius="xl"
+            variant="filled"
             onClick={(e) => {
               e.stopPropagation();
-              onClick?.(id);
+              onAddToCart?.(id);
             }}
             style={{
-              backgroundColor: 'white',
-              borderColor: '#247c62', // Green border
-              color: '#247c62',
-              borderWidth: '1px',
+              backgroundColor: colors.primary,
+              borderColor: colors.primary,
+              color: colors.text.inverse,
+              boxShadow: '0 12px 22px rgba(31, 122, 99, 0.35)',
             }}
+            aria-label={`Add ${name} to cart`}
           >
-            <IconPlus size={18} strokeWidth={2.5} />
+            <IconPlus size={20} strokeWidth={2.5} />
           </ActionIcon>
         </Box>
       </Box>
 
       {/* Product Details */}
-      <Stack gap={4} style={{ flexGrow: 1 }}>
+      <Stack gap={4} style={{ flexGrow: 1 }} onClick={() => onClick?.(id)}>
         {/* Delivery Time */}
         <Group gap={4} align="center">
-           <IconClock size={10} color={colors.text.secondary} />
-           <Text size="xs" variant="secondary" style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' }}>
-             {deliveryTime}
-           </Text>
+          <IconClock size={11} color={colors.text.secondary} />
+          <Text
+            size="xs"
+            variant="secondary"
+            style={{
+              fontSize: '10px',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            }}
+          >
+            {deliveryTime}
+          </Text>
         </Group>
 
         {/* Product Name */}
@@ -115,41 +154,45 @@ export function ProductCard({
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
             fontSize: '13px',
+            letterSpacing: '-0.01em',
           }}
         >
           {name}
         </Text>
-        
-        {/* Description (Optional - hardcoded for now based on image) */}
-        <Text size="xs" variant="secondary" style={{ fontSize: '10px', lineHeight: 1.2, color: '#888' }}>
-            Fresh, aromatic, detox, garnish for soups & curries
-        </Text>
 
         {/* Quantity */}
-        <Text size="xs" variant="secondary" style={{ fontSize: '11px', marginTop: 4 }}>
-            {quantity}
+        <Text
+          size="xs"
+          variant="secondary"
+          style={{ fontSize: '11px', marginTop: 2, fontWeight: 600 }}
+        >
+          {quantity}
         </Text>
 
         {/* Price Section */}
         <Group gap={6} align="center" mt="auto">
-           {/* Discount Percentage */}
-           {discount && (
-               <Text size="xs" style={{ color: '#ff6b00', fontWeight: 700, fontSize: '11px' }}>
-                   {discount}% OFF
-               </Text>
-           )}
-           
-           {/* Current Price */}
-           <Text size="sm" fw={typography.fontWeight.bold} style={{ color: colors.text.primary }}>
-               ₹{price}
-           </Text>
+          {/* Current Price */}
+          <Text
+            size="sm"
+            fw={typography.fontWeight.bold}
+            style={{ color: colors.text.primary, fontSize: '15px' }}
+          >
+            ₹{price}
+          </Text>
 
-           {/* Original Price */}
-           {originalPrice && (
-               <Text size="xs" style={{ textDecoration: 'line-through', color: colors.text.secondary, fontSize: '11px' }}>
-                   ₹{originalPrice}
-               </Text>
-           )}
+          {/* Original Price */}
+          {originalPrice && (
+            <Text
+              size="xs"
+              style={{
+                textDecoration: 'line-through',
+                color: colors.text.secondary,
+                fontSize: '11px',
+              }}
+            >
+              ₹{originalPrice}
+            </Text>
+          )}
         </Group>
       </Stack>
     </Box>

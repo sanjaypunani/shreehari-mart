@@ -2,7 +2,6 @@
 
 import React from 'react';
 import {
-  ActionIcon,
   Alert,
   Badge,
   Box,
@@ -12,10 +11,11 @@ import {
   Skeleton,
   Stack,
 } from '@mantine/core';
-import { IconArrowLeft, IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { colors, radius, spacing, typography } from '../../../theme';
 import { Text } from '../../../components/ui';
+import { StickyPageHeader } from '../../../components/navigation/StickyPageHeader';
 import { ConfirmDialog } from '../../../components/ui/Modal';
 import { authApi, ordersApi } from '../../../lib/api/services';
 import { getErrorMessage } from '../../../lib/api-client';
@@ -253,26 +253,17 @@ export default function OrdersPage() {
         paddingBottom: 'calc(90px + env(safe-area-inset-bottom))',
       }}
     >
-      {/* Header */}
-      <Group
-        justify="space-between"
-        align="center"
-        p={spacing.md}
-        style={{ borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.background }}
-      >
-        <ActionIcon
-          variant="subtle"
-          onClick={() => router.back()}
-          aria-label="Go back"
-          style={{ color: colors.text.primary }}
-        >
-          <IconArrowLeft size={22} />
-        </ActionIcon>
-        <Text size="lg" fw={typography.fontWeight.bold}>
-          My Orders
-        </Text>
-        <Box w={34} />
-      </Group>
+      <StickyPageHeader
+        title="My Orders"
+        onBack={() => router.back()}
+        rightSlot={
+          !loadingOrders && !error ? (
+            <Text size="xs" variant="secondary">
+              {orders.length}
+            </Text>
+          ) : undefined
+        }
+      />
 
       <Stack p={spacing.md} gap={spacing.md}>
         {/* Loading skeleton */}
@@ -428,7 +419,7 @@ export default function OrdersPage() {
         confirmText="Replace Cart"
         cancelText="Cancel"
         variant="warning"
-        loading={false}
+        loading={!!reorderingOrderId}
       />
     </Box>
   );

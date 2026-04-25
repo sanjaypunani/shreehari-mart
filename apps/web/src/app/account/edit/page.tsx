@@ -2,7 +2,6 @@
 
 import React from 'react';
 import {
-  ActionIcon,
   Alert,
   Box,
   Button,
@@ -14,13 +13,14 @@ import {
   TextInput,
   Textarea,
 } from '@mantine/core';
-import { IconArrowLeft, IconDeviceFloppy } from '@tabler/icons-react';
+import { IconDeviceFloppy } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { useRouter } from 'next/navigation';
 import { colors, radius, spacing, typography } from '../../../theme';
 import { Text } from '../../../components/ui';
 import { LoginBottomSheet } from '../../../components/auth/LoginBottomSheet';
+import { StickyPageHeader } from '../../../components/navigation/StickyPageHeader';
 import {
   authApi,
   buildingsApi,
@@ -275,25 +275,7 @@ export default function EditAccountPage() {
         returnUrl="/account/edit"
       />
 
-      <Box
-        px={spacing.md}
-        pb={spacing.md}
-        style={{
-          backgroundColor: colors.background,
-          borderBottom: `1px solid ${colors.border}`,
-          paddingTop: 'calc(var(--safe-area-top) + 12px)',
-        }}
-      >
-        <Group justify="space-between" align="center">
-          <ActionIcon variant="subtle" onClick={handleDiscardAndBack}>
-            <IconArrowLeft size={22} color={colors.text.primary} />
-          </ActionIcon>
-          <Text size="lg" fw={typography.fontWeight.bold}>
-            Edit Profile
-          </Text>
-          <Box w={34} />
-        </Group>
-      </Box>
+      <StickyPageHeader title="Edit Profile" onBack={handleDiscardAndBack} />
 
       <Stack p={spacing.md} gap={spacing.md}>
         {errorMessage && <Alert color="red">{errorMessage}</Alert>}

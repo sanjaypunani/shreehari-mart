@@ -25,8 +25,19 @@
   );
 
   /* Mobile bottom navigation sizing (enabled via media query below) */
-  --mobile-bottom-tabs-height: 64px;
+  --mobile-bottom-tabs-height: 56px;
+  --mobile-bottom-tabs-bottom-padding: var(--safe-area-bottom);
   --mobile-bottom-tabs-total-height: 0px;
+
+  /* Brand tokens */
+  --brand-primary: #1f7a63;
+  --brand-secondary: #f97316;
+  --brand-bg: #f5f8fc;
+  --brand-surface: #ffffff;
+  --brand-text: #0f172a;
+  --brand-muted: #475569;
+  --brand-border: #dbe3ec;
+  --touch-target-size: 44px;
 }
 
 @supports (height: 100dvh) {
@@ -37,8 +48,9 @@
 
 @media screen and (max-width: 47.99em) {
   :root {
+    --mobile-bottom-tabs-bottom-padding: calc(var(--safe-area-bottom) + 8px);
     --mobile-bottom-tabs-total-height: calc(
-      var(--mobile-bottom-tabs-height) + var(--safe-area-bottom)
+      var(--mobile-bottom-tabs-height) + var(--mobile-bottom-tabs-bottom-padding)
     );
   }
 }
@@ -57,20 +69,12 @@ html {
            env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
   -webkit-text-size-adjust: 100%;
   font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
+    var(--font-body),
+    'Nunito Sans',
+    'Avenir Next',
     'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    'Noto Sans',
-    sans-serif,
-    'Apple Color Emoji',
-    'Segoe UI Emoji',
-    'Segoe UI Symbol',
-    'Noto Color Emoji';
+    system-ui,
+    sans-serif;
   line-height: 1.5;
   tab-size: 4;
   scroll-behavior: smooth;
@@ -78,15 +82,23 @@ html {
 
 body {
   font-family: inherit;
+  color: var(--brand-text);
+  background:
+    radial-gradient(circle at 20% -20%, rgba(31, 122, 99, 0.14), transparent 40%),
+    radial-gradient(circle at 90% 5%, rgba(249, 115, 22, 0.1), transparent 35%),
+    var(--brand-bg);
   line-height: inherit;
   min-height: var(--app-viewport-height);
   margin: 0;
   padding: 0;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
   text-decoration: none;
   color: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
 h1,
 h2,
@@ -111,6 +123,24 @@ a {
   color: inherit;
   text-decoration: inherit;
 }
+
+button,
+[role='button'],
+a {
+  touch-action: manipulation;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 pre {
   font-family:
     ui-monospace,

@@ -231,7 +231,7 @@ export const CartBar = ({
                     Delivery in
                   </Text>
                   <Text size="sm" fw={700} c={colors.text.primary}>
-                    4 Mins
+                    30 mins
                   </Text>
                   <Badge color="green" size="sm" variant="light">
                     Superfast
@@ -356,10 +356,12 @@ export const CartBar = ({
       <Box
         style={{
           backgroundColor: colors.primary,
-          padding: spacing.md,
+          paddingTop: spacing.sm,
+          paddingRight: spacing.md,
+          paddingLeft: spacing.md,
           paddingBottom: withSafeAreaInset
-            ? `calc(${spacing.md} + var(--safe-area-bottom))`
-            : spacing.md,
+            ? `calc(${spacing.sm} + var(--safe-area-bottom))`
+            : spacing.sm,
           boxShadow: shadow.lg,
         }}
       >
@@ -372,7 +374,7 @@ export const CartBar = ({
             wrap="nowrap"
           >
             {/* Product Images Stack */}
-            <Box style={{ position: 'relative', width: 48, height: 48 }}>
+            <Box style={{ position: 'relative', width: 40, height: 40 }}>
               {items
                 .filter((item) => item.isAvailable)
                 .slice(0, 3)
@@ -381,10 +383,10 @@ export const CartBar = ({
                     key={item.id}
                     style={{
                       position: 'absolute',
-                      left: index * 12,
+                      left: index * 10,
                       top: 0,
-                      width: 40,
-                      height: 40,
+                      width: 32,
+                      height: 32,
                       border: '2px solid #ffffff',
                       borderRadius: radius.sm,
                       overflow: 'hidden',
@@ -395,8 +397,8 @@ export const CartBar = ({
                     <Image
                       src={item.image}
                       alt={item.name}
-                      w={40}
-                      h={40}
+                      w={32}
+                      h={32}
                       fit="cover"
                       radius={0}
                     />
@@ -406,7 +408,7 @@ export const CartBar = ({
 
             {/* Item count and savings */}
             <Stack gap={2} style={{ flex: 1 }}>
-              <Text size="sm" c="#ffffff" fw={600}>
+              <Text size="xs" c="#ffffff" fw={700}>
                 {totalItems} Items
               </Text>
               <Text size="xs" c="rgba(255, 255, 255, 0.9)">
@@ -420,7 +422,7 @@ export const CartBar = ({
             variant="white"
             color={colors.primary}
             radius={radius.sm}
-            size="md"
+            size="sm"
             fw={600}
             onClick={(e) => {
               e.stopPropagation();
@@ -428,6 +430,9 @@ export const CartBar = ({
             }}
             style={{
               flexShrink: 0,
+              height: 34,
+              paddingLeft: spacing.sm,
+              paddingRight: spacing.sm,
             }}
           >
             Go to Cart
