@@ -20,7 +20,7 @@ module.exports = {
   entry: './apps/api/src/vercel.ts',
   output: {
     filename: 'vercel.js',
-    path: path.join(ROOT, 'dist/vercel-api'),
+    path: path.join(ROOT, 'apps/api/dist'),
     libraryTarget: 'commonjs2',
   },
   resolve: {

@@ -30,7 +30,7 @@ compiler.run((err, stats) => {
   console.log(
     stats.toString({ colors: true, modules: false, chunks: false })
   );
-  console.log('\nBuild complete → dist/vercel-api/vercel.js');
+  console.log('\nBuild complete → apps/api/dist/vercel.js');
 
   compiler.close((closeErr) => {
     if (closeErr) console.error('Compiler close error:', closeErr);
