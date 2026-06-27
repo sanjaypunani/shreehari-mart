@@ -61,11 +61,11 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const { scrollDirection, isAtTop, scrollRef } = useScrollDirection();
   const chromeVisible = isAtTop || scrollDirection === 'up' || scrollDirection === null;
 
-  // Compact tab bar is ~56px total (36px inner + padding + safe area)
+  // Original tab bar padding offset is 88px
   const mainBottomPadding = isAccountFlow
     ? 0
     : shouldShowBottomTabs
-      ? '64px'
+      ? '88px'
       : 0;
 
   return (
@@ -104,7 +104,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
       {shouldShowCartFab && (
         <CartFab
           visible={chromeVisible}
-          bottomOffset={shouldShowBottomTabs ? '56px' : '0px'}
+          bottomOffset={shouldShowBottomTabs ? '88px' : '0px'}
         />
       )}
       {shouldShowBottomTabs && <BottomTabNavigation visible={chromeVisible} />}

@@ -46,7 +46,10 @@ export function MobileHeader({ headerVisible = true }: MobileHeaderProps) {
         zIndex: 100,
         backdropFilter: 'blur(12px)',
         paddingTop: 'var(--safe-area-top)',
-        height: 'calc(106px + var(--safe-area-top))',
+        height: headerVisible
+          ? 'calc(106px + var(--safe-area-top))'
+          : 'calc(46px + var(--safe-area-top))',
+        transition: 'height 0.3s cubic-bezier(.4,0,.2,1)',
         overflow: 'hidden',
       }}
     >

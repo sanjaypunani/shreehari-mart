@@ -21,7 +21,7 @@ interface ScrollDirectionState {
  * The header / bottom-tabs should be visible when `isAtTop` is true
  * OR `scrollDirection === 'up'`.
  */
-export function useScrollDirection(threshold = 10) {
+export function useScrollDirection(threshold = 10, topThreshold = 60) {
   const [state, setState] = useState<ScrollDirectionState>({
     scrollDirection: null,
     isAtTop: true,
@@ -40,7 +40,7 @@ export function useScrollDirection(threshold = 10) {
 
         requestAnimationFrame(() => {
           const currentScrollTop = node.scrollTop;
-          const atTop = currentScrollTop <= 5;
+          const atTop = currentScrollTop <= topThreshold;
 
           if (atTop) {
             setState({ scrollDirection: null, isAtTop: true });

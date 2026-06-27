@@ -68,13 +68,13 @@ function BottomTabNavigationContent({
         position: 'fixed',
         left: 14,
         right: 14,
-        bottom: 'calc(4px + var(--safe-area-bottom))',
+        bottom: 'calc(6px + var(--safe-area-bottom))',
         zIndex: 90,
         background: 'rgba(255, 253, 247, 0.55)',
         backdropFilter: 'blur(22px) saturate(180%)',
         WebkitBackdropFilter: 'blur(22px) saturate(180%)',
-        borderRadius: 24,
-        padding: '3px 6px',
+        borderRadius: 30,
+        padding: '8px 10px',
         border: '1px solid rgba(255, 255, 255, 0.4)',
         boxShadow: [
           '0 14px 40px rgba(28, 42, 33, 0.18)',
@@ -94,7 +94,7 @@ function BottomTabNavigationContent({
         wrap="nowrap"
         gap={2}
         align="stretch"
-        style={{ minHeight: 36 }}
+        style={{ minHeight: 48 }}
       >
         {tabs.map((tab) => {
           const isActive = tab.key === activeTab;
@@ -110,7 +110,7 @@ function BottomTabNavigationContent({
               aria-current={isActive ? 'page' : undefined}
               style={{
                 minWidth: 'var(--touch-target-size)',
-                borderRadius: 18,
+                borderRadius: 22,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -123,7 +123,7 @@ function BottomTabNavigationContent({
                 color,
                 transition:
                   'background 220ms cubic-bezier(.2,.8,.2,1), transform 120ms ease',
-                padding: '3px 4px',
+                padding: '6px 4px',
               }}
               onPointerDown={(e) => {
                 (e.currentTarget as HTMLElement).style.transform =
@@ -136,14 +136,14 @@ function BottomTabNavigationContent({
                 (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
               }}
             >
-              <Stack gap={1} align="center" justify="center">
+              <Stack gap={2} align="center" justify="center">
                 <Icon
-                  size={18}
+                  size={20}
                   color={color}
                   stroke={isActive ? 2.2 : 1.8}
                 />
                 <Text
-                  size="9px"
+                  size="10px"
                   fw={
                     isActive
                       ? typography.fontWeight.semibold
