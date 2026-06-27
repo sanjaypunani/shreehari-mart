@@ -68,4 +68,7 @@ export function calculatePriceForQuantity(
   );
 }
 
+export { triggerHaptic } from './haptics';
+export type { HapticIntensity } from './haptics';
+
 export {};

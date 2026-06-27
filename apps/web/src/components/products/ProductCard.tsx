@@ -1,10 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Box, Stack, Group, ActionIcon } from '@mantine/core';
-import { IconPlus, IconClock } from '@tabler/icons-react';
-import { colors, spacing, radius, shadow, typography } from '../../theme';
+import { Box, Group } from '@mantine/core';
+import { IconCheck } from '@tabler/icons-react';
+import { colors, typography } from '../../theme';
 import { Text, Image } from '../ui';
+import { useCartStore } from '../../store';
 
 export interface ProductCardProps {
   id: string;
@@ -12,8 +13,9 @@ export interface ProductCardProps {
   image: string;
   price: number;
   discount?: number;
-  quantity: string; // e.g., "500 g"
-  deliveryTime?: string; // e.g., "20 MINS"
+  quantity: string;
+  deliveryTime?: string;
+  tag?: string;
   onClick?: (id: string) => void;
   onAddToCart?: (id: string) => void;
 }
@@ -25,176 +27,187 @@ export function ProductCard({
   price,
   discount,
   quantity,
-  deliveryTime = '20 MINS',
+  deliveryTime,
+  tag,
   onClick,
   onAddToCart,
 }: ProductCardProps) {
-  // Calculate original price if discount exists
-  const originalPrice = discount ? Math.round(price / (1 - discount / 100)) : null;
+  const originalPrice = discount
+    ? Math.round(price / (1 - discount / 100))
+    : null;
+
+  const inCartQty = useCartStore((s) =>
+    s.items.reduce((sum, i) => (i.id === id ? sum + i.quantity : sum), 0)
+  );
+  const isInCart = inCartQty > 0;
 
   return (
     <Box
       style={{
-        backgroundColor: colors.surface,
-        position: 'relative',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
+        background: colors.surface,
+        borderRadius: 18,
         overflow: 'hidden',
         border: `1px solid ${colors.border}`,
-        borderRadius: radius.lg,
-        boxShadow: shadow.sm,
-        padding: spacing.xs,
         cursor: 'pointer',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
       }}
     >
-      {/* Product Image Container */}
+      {/* Image */}
       <Box
         style={{
-          width: '100%',
-          aspectRatio: '1',
           position: 'relative',
-          marginBottom: spacing.xs,
-          borderRadius: radius.md,
-          overflow: 'hidden',
-          background:
-            'linear-gradient(180deg, rgba(236, 244, 242, 0.9) 0%, rgba(255, 255, 255, 1) 100%)',
+          aspectRatio: '1 / 0.9',
         }}
         onClick={() => onClick?.(id)}
       >
-        {discount && (
-          <Box
-            style={{
-              position: 'absolute',
-              top: spacing.xs,
-              left: spacing.xs,
-              zIndex: 9,
-              backgroundColor: `${colors.secondary}`,
-              color: colors.text.inverse,
-              borderRadius: radius.full,
-              padding: '4px 8px',
-              fontSize: '10px',
-              fontWeight: typography.fontWeight.bold,
-              letterSpacing: '0.01em',
-            }}
-          >
-            {discount}% OFF
-          </Box>
-        )}
-
         <Image
           src={image}
           alt={name}
           width="100%"
           height="100%"
-          fit="contain"
-          radius="md"
+          fit="cover"
+          radius={0}
           withPlaceholder
         />
 
-        {/* Add Button (Top Right) */}
-        <Box
-          style={{
-            position: 'absolute',
-            right: spacing.xs,
-            bottom: spacing.xs,
-            zIndex: 10,
-          }}
-        >
-          <ActionIcon
-            size={44}
-            radius="xl"
-            variant="filled"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddToCart?.(id);
-            }}
+        {/* Tag badge (top-left) */}
+        {tag && (
+          <Box
             style={{
-              backgroundColor: colors.primary,
-              borderColor: colors.primary,
-              color: colors.text.inverse,
-              boxShadow: '0 12px 22px rgba(31, 122, 99, 0.35)',
+              position: 'absolute',
+              top: 8,
+              left: 8,
+              padding: '3px 8px',
+              borderRadius: 6,
+              background: colors.surface,
+              color: colors.text.primary,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: 0.5,
+              textTransform: 'uppercase' as const,
             }}
-            aria-label={`Add ${name} to cart`}
           >
-            <IconPlus size={20} strokeWidth={2.5} />
-          </ActionIcon>
-        </Box>
+            {tag}
+          </Box>
+        )}
+
+        {/* Discount badge (top-right) */}
+        {discount && discount > 0 && (
+          <Box
+            style={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              padding: '3px 7px',
+              borderRadius: 6,
+              background: colors.secondary,
+              color: '#fff',
+              fontSize: 10,
+              fontWeight: 700,
+            }}
+          >
+            -{discount}%
+          </Box>
+        )}
       </Box>
 
-      {/* Product Details */}
-      <Stack gap={4} style={{ flexGrow: 1 }} onClick={() => onClick?.(id)}>
-        {/* Delivery Time */}
-        <Group gap={4} align="center">
-          <IconClock size={11} color={colors.text.secondary} />
-          <Text
-            size="xs"
-            variant="secondary"
-            style={{
-              fontSize: '10px',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-            }}
-          >
-            {deliveryTime}
-          </Text>
-        </Group>
-
-        {/* Product Name */}
+      {/* Details */}
+      <Box
+        style={{ padding: 12, display: 'flex', flexDirection: 'column', flex: 1 }}
+        onClick={() => onClick?.(id)}
+      >
         <Text
-          size="sm"
+          size="13px"
           fw={typography.fontWeight.semibold}
-          variant="primary"
           style={{
-            lineHeight: 1.3,
-            minHeight: '2.6em',
+            lineHeight: 1.25,
+            letterSpacing: -0.1,
+            color: colors.text.primary,
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
-            fontSize: '13px',
-            letterSpacing: '-0.01em',
+            minHeight: '2.5em',
           }}
         >
           {name}
         </Text>
-
-        {/* Quantity */}
         <Text
-          size="xs"
-          variant="secondary"
-          style={{ fontSize: '11px', marginTop: 2, fontWeight: 600 }}
+          size="11px"
+          style={{ color: colors.text.secondary, marginTop: 2 }}
         >
           {quantity}
         </Text>
 
-        {/* Price Section */}
-        <Group gap={6} align="center" mt="auto">
-          {/* Current Price */}
-          <Text
-            size="sm"
-            fw={typography.fontWeight.bold}
-            style={{ color: colors.text.primary, fontSize: '15px' }}
-          >
-            ₹{price}
-          </Text>
+        <Box style={{ flex: 1 }} />
 
-          {/* Original Price */}
-          {originalPrice && (
-            <Text
-              size="xs"
+        {/* Price + ADD button row */}
+        <Group
+          justify="space-between"
+          align="center"
+          mt={10}
+          wrap="nowrap"
+        >
+          <div>
+            <span
               style={{
-                textDecoration: 'line-through',
-                color: colors.text.secondary,
-                fontSize: '11px',
+                fontSize: 15,
+                fontWeight: 700,
+                letterSpacing: -0.2,
+                color: colors.text.primary,
               }}
             >
-              ₹{originalPrice}
-            </Text>
-          )}
+              ₹{Math.round(price)}
+            </span>
+            {originalPrice && (
+              <span
+                style={{
+                  fontSize: 11,
+                  color: colors.text.faint,
+                  textDecoration: 'line-through',
+                  marginLeft: 5,
+                }}
+              >
+                ₹{Math.round(originalPrice)}
+              </span>
+            )}
+          </div>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToCart?.(id);
+            }}
+            aria-label={isInCart ? `In cart: ${inCartQty}` : 'Add to cart'}
+            style={{
+              padding: '6px 14px',
+              borderRadius: 14,
+              background: isInCart ? colors.primary : 'transparent',
+              color: isInCart ? colors.text.inverse : colors.primary,
+              border: `1.5px solid ${colors.primary}`,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              letterSpacing: 0.3,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+            }}
+          >
+            {isInCart ? (
+              <>
+                <IconCheck size={13} stroke={3} />
+                {inCartQty}
+              </>
+            ) : (
+              'ADD'
+            )}
+          </button>
         </Group>
-      </Stack>
+      </Box>
     </Box>
   );
 }

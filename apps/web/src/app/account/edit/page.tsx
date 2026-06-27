@@ -14,12 +14,10 @@ import {
   Textarea,
 } from '@mantine/core';
 import { IconDeviceFloppy } from '@tabler/icons-react';
-import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { useRouter } from 'next/navigation';
 import { colors, radius, spacing, typography } from '../../../theme';
 import { Text } from '../../../components/ui';
-import { LoginBottomSheet } from '../../../components/auth/LoginBottomSheet';
 import { StickyPageHeader } from '../../../components/navigation/StickyPageHeader';
 import {
   authApi,
@@ -40,8 +38,7 @@ export default function EditAccountPage() {
   const router = useRouter();
   const auth = useAuth();
   const updateUser = useAppStore((state) => state.updateUser);
-  const [loginOpen, { open: openLogin, close: closeLogin }] =
-    useDisclosure(false);
+  const goToLogin = () => router.push('/login?returnUrl=%2Faccount%2Fedit');
 
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
@@ -269,12 +266,6 @@ export default function EditAccountPage() {
       pb={`calc(90px + var(--safe-area-bottom))`}
       style={{ minHeight: '100vh', backgroundColor: colors.surface }}
     >
-      <LoginBottomSheet
-        opened={loginOpen}
-        onClose={closeLogin}
-        returnUrl="/account/edit"
-      />
-
       <StickyPageHeader title="Edit Profile" onBack={handleDiscardAndBack} />
 
       <Stack p={spacing.md} gap={spacing.md}>
@@ -342,7 +333,7 @@ export default function EditAccountPage() {
                     <Button
                       variant="subtle"
                       color="blue"
-                      onClick={openLogin}
+                      onClick={goToLogin}
                       style={{ minHeight: 44, fontWeight: typography.fontWeight.semibold }}
                     >
                       Change Phone

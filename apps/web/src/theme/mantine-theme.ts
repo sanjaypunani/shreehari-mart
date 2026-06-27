@@ -3,32 +3,32 @@ import { colors } from './colors';
 import { typography } from './typography';
 import { radius, shadow } from './spacing';
 
-// Define primary color palette for Mantine
+// Cropzo Forest green palette for Mantine
 const primaryColor: MantineColorsTuple = [
-  '#e7f6f2',
-  '#ceece4',
-  '#9ed7c8',
-  '#6fc2ab',
-  '#43ad8e',
-  '#1f7a63', // main color
-  '#1b6e59',
-  '#165847',
-  '#114236',
-  '#0a2d24',
+  '#f0f4f0',
+  '#d9e3d8',
+  '#b4c8b2',
+  '#8ead8b',
+  '#6a9367',
+  '#2D4A2B', // main - deep forest
+  '#274024',
+  '#1f351d',
+  '#182a17',
+  '#101e10',
 ];
 
-// Define secondary color palette for Mantine
+// Terracotta secondary palette
 const secondaryColor: MantineColorsTuple = [
-  '#fff3e8',
-  '#fee4cf',
-  '#fdc89f',
-  '#fcab6e',
-  '#fb8f3f',
-  '#f97316', // main color
-  '#db6410',
-  '#be550b',
-  '#a04607',
-  '#7f3704',
+  '#fef3ed',
+  '#fce4d6',
+  '#f9c8ab',
+  '#f5aa7e',
+  '#f08c53',
+  '#C85A2C', // main - terracotta
+  '#b44f26',
+  '#9e4420',
+  '#87391a',
+  '#702e14',
 ];
 
 export const mantineTheme = createTheme({
@@ -47,7 +47,7 @@ export const mantineTheme = createTheme({
   },
   lineHeights: {
     xs: typography.lineHeight.tight.toString(),
-    sm: typography.lineHeight.normal.toString(),
+    sm: typography.lineHeight.snug.toString(),
     md: typography.lineHeight.normal.toString(),
     lg: typography.lineHeight.relaxed.toString(),
     xl: typography.lineHeight.relaxed.toString(),
@@ -68,30 +68,30 @@ export const mantineTheme = createTheme({
   },
   headings: {
     fontFamily: typography.headingFontFamily,
-    fontWeight: typography.fontWeight.bold.toString(),
+    fontWeight: typography.fontWeight.regular.toString(),
     sizes: {
       h1: {
-        fontSize: typography.fontSize['3xl'],
+        fontSize: typography.fontSize['4xl'],
         lineHeight: typography.lineHeight.tight.toString(),
       },
       h2: {
-        fontSize: typography.fontSize['2xl'],
+        fontSize: typography.fontSize['3xl'],
         lineHeight: typography.lineHeight.tight.toString(),
       },
       h3: {
+        fontSize: typography.fontSize['2xl'],
+        lineHeight: typography.lineHeight.snug.toString(),
+      },
+      h4: {
         fontSize: typography.fontSize.xl,
         lineHeight: typography.lineHeight.normal.toString(),
       },
-      h4: {
+      h5: {
         fontSize: typography.fontSize.lg,
         lineHeight: typography.lineHeight.normal.toString(),
       },
-      h5: {
-        fontSize: typography.fontSize.base,
-        lineHeight: typography.lineHeight.normal.toString(),
-      },
       h6: {
-        fontSize: typography.fontSize.sm,
+        fontSize: typography.fontSize.base,
         lineHeight: typography.lineHeight.normal.toString(),
       },
     },

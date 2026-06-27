@@ -1,198 +1,209 @@
 /**
  * Cart State Management with Zustand
  *
- * Manages shopping cart state including items, quantities, and total calculations.
+ * Cart is keyed per (productId, selectedVariant). Adding a 500g and a 1kg of
+ * the same product creates two separate lines, and +/- on a line steps that
+ * variant's quantity up or down without ever swapping which variant is in
+ * the cart.
  */
 
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
-/**
- * Cart Item Interface
- */
 export interface CartItem {
-  id: string;
+  id: string; // productId
   name: string;
   image: string;
-  price: number; // Current price based on selected variant
-  quantity: number; // Cart quantity (how many times added)
-  orderedQuantity: number; // Actual quantity ordered (e.g., 500 for 500gm)
+  price: number; // unit price for this variant
+  quantity: number; // how many of THIS variant the user wants
+  orderedQuantity: number; // size of the variant (e.g., 500 for 500gm)
   unit: 'gm' | 'kg' | 'pc';
-  productQuantity: string; // Display string (e.g., "500 gm", "1 kg")
-  baseQuantity: number; // Product's base quantity from API (e.g., 250)
-  basePrice: number; // Product's base price from API (e.g., 30.00)
-  baseUnit: 'gm' | 'kg' | 'pc'; // Product's base unit from API
+  productQuantity: string; // display label (e.g., "500 gm")
+  baseQuantity: number;
+  basePrice: number;
+  baseUnit: 'gm' | 'kg' | 'pc';
   isAvailable: boolean;
-  selectedVariant?: string;
+  selectedVariant: string; // variant key (e.g., "500gm") — required for line identity
 }
 
-/**
- * Cart Store Interface
- */
+const lineKeyFor = (productId: string, variant: string) =>
+  `${productId}::${variant}`;
+
+const findLineIndex = (
+  items: CartItem[],
+  productId: string,
+  variant: string
+) =>
+  items.findIndex(
+    (i) => i.id === productId && i.selectedVariant === variant
+  );
+
 interface CartStore {
-  // State
   items: CartItem[];
   isExpanded: boolean;
 
-  // Computed
   totalItems: number;
   totalAmount: number;
   savings: number;
 
-  // Actions
-  addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
-  removeItem: (itemId: string) => void;
-  updateQuantity: (itemId: string, quantity: number) => void;
-  updateVariant: (
-    itemId: string,
-    variantValue: string,
-    variantLabel: string,
-    variantPrice: number,
-    orderedQuantity: number,
-    unit: 'gm' | 'kg' | 'pc'
+  addItem: (
+    item: Omit<CartItem, 'quantity' | 'selectedVariant'> & {
+      quantity?: number;
+      selectedVariant: string;
+    }
   ) => void;
+  removeItem: (productId: string) => void;
+  removeLine: (productId: string, variant: string) => void;
+  updateLineQuantity: (
+    productId: string,
+    variant: string,
+    quantity: number
+  ) => void;
+  incrementLine: (productId: string, variant: string) => void;
+  decrementLine: (productId: string, variant: string) => void;
+  getLineQuantity: (productId: string, variant: string) => number;
+  getProductTotalQuantity: (productId: string) => number;
   clearCart: () => void;
   toggleExpanded: () => void;
   setExpanded: (expanded: boolean) => void;
 }
 
-/**
- * Initial state
- */
 const initialState = {
-  items: [],
+  items: [] as CartItem[],
   isExpanded: false,
   totalItems: 0,
   totalAmount: 0,
   savings: 0,
 };
 
-/**
- * Calculate cart totals
- */
 const calculateTotals = (items: CartItem[]) => {
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalAmount = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  // Mock savings calculation (assuming 20% discount on all items)
   const savings = totalAmount * 0.2;
-
   return { totalItems, totalAmount, savings };
 };
 
-/**
- * Create the cart store
- */
 export const useCartStore = create<CartStore>()(
   devtools(
     persist(
       (set, get) => ({
         ...initialState,
 
-        // Add item to cart
         addItem: (item) => {
           const items = get().items;
-          const existingItemIndex = items.findIndex((i) => i.id === item.id);
+          const idx = findLineIndex(items, item.id, item.selectedVariant);
 
           let newItems: CartItem[];
+          const incomingQty = item.quantity ?? 1;
 
-          if (existingItemIndex !== -1) {
-            // Item exists, replace it with new item data (don't increment quantity)
+          if (idx !== -1) {
+            // Same product+variant already in cart — add to its quantity.
             newItems = items.map((i, index) =>
-              index === existingItemIndex
-                ? ({ ...item, quantity: item.quantity || 1 } as CartItem)
+              index === idx
+                ? { ...i, quantity: i.quantity + incomingQty }
                 : i
             );
           } else {
-            // New item, add to cart
             newItems = [
               ...items,
-              { ...item, quantity: item.quantity || 1 } as CartItem,
+              { ...item, quantity: incomingQty } as CartItem,
             ];
           }
 
-          const totals = calculateTotals(newItems);
           set(
-            {
-              items: newItems,
-              ...totals,
-            },
+            { items: newItems, ...calculateTotals(newItems) },
             false,
             'cart/addItem'
           );
         },
 
-        // Remove item from cart
-        removeItem: (itemId) => {
-          const items = get().items.filter((i) => i.id !== itemId);
-          const totals = calculateTotals(items);
+        // Removes EVERY line for the given product (used when a product becomes
+        // unavailable and we want to drop all its variants from the basket).
+        removeItem: (productId) => {
+          const items = get().items.filter((i) => i.id !== productId);
           set(
-            {
-              items,
-              ...totals,
-            },
+            { items, ...calculateTotals(items) },
             false,
             'cart/removeItem'
           );
         },
 
-        // Update item quantity
-        updateQuantity: (itemId, quantity) => {
+        removeLine: (productId, variant) => {
+          const items = get().items.filter(
+            (i) => !(i.id === productId && i.selectedVariant === variant)
+          );
+          set(
+            { items, ...calculateTotals(items) },
+            false,
+            'cart/removeLine'
+          );
+        },
+
+        updateLineQuantity: (productId, variant, quantity) => {
           if (quantity <= 0) {
-            get().removeItem(itemId);
+            get().removeLine(productId, variant);
             return;
           }
-
           const items = get().items.map((i) =>
-            i.id === itemId ? { ...i, quantity } : i
+            i.id === productId && i.selectedVariant === variant
+              ? { ...i, quantity }
+              : i
           );
-          const totals = calculateTotals(items);
           set(
-            {
-              items,
-              ...totals,
-            },
+            { items, ...calculateTotals(items) },
             false,
-            'cart/updateQuantity'
+            'cart/updateLineQuantity'
           );
         },
 
-        // Update item variant
-        updateVariant: (
-          itemId,
-          variantValue,
-          variantLabel,
-          variantPrice,
-          orderedQuantity,
-          unit
-        ) => {
-          const items = get().items.map((i) => {
-            if (i.id === itemId) {
-              return {
-                ...i,
-                selectedVariant: variantValue,
-                productQuantity: variantLabel,
-                price: variantPrice,
-                orderedQuantity,
-                unit,
-              };
-            }
-            return i;
-          });
-          const totals = calculateTotals(items);
+        incrementLine: (productId, variant) => {
+          const items = get().items;
+          const idx = findLineIndex(items, productId, variant);
+          if (idx === -1) return;
+          const next = items.map((i, index) =>
+            index === idx ? { ...i, quantity: i.quantity + 1 } : i
+          );
           set(
-            {
-              items,
-              ...totals,
-            },
+            { items: next, ...calculateTotals(next) },
             false,
-            'cart/updateVariant'
+            'cart/incrementLine'
           );
         },
 
-        // Clear cart
+        decrementLine: (productId, variant) => {
+          const items = get().items;
+          const idx = findLineIndex(items, productId, variant);
+          if (idx === -1) return;
+          const current = items[idx];
+          if (current.quantity <= 1) {
+            get().removeLine(productId, variant);
+            return;
+          }
+          const next = items.map((i, index) =>
+            index === idx ? { ...i, quantity: i.quantity - 1 } : i
+          );
+          set(
+            { items: next, ...calculateTotals(next) },
+            false,
+            'cart/decrementLine'
+          );
+        },
+
+        getLineQuantity: (productId, variant) => {
+          const line = get().items.find(
+            (i) => i.id === productId && i.selectedVariant === variant
+          );
+          return line?.quantity ?? 0;
+        },
+
+        getProductTotalQuantity: (productId) =>
+          get()
+            .items.filter((i) => i.id === productId)
+            .reduce((sum, i) => sum + i.quantity, 0),
+
         clearCart: () => {
           set(
             {
@@ -206,36 +217,22 @@ export const useCartStore = create<CartStore>()(
           );
         },
 
-        // Toggle expanded state
         toggleExpanded: () => {
           set(
-            (state) => ({
-              isExpanded: !state.isExpanded,
-            }),
+            (state) => ({ isExpanded: !state.isExpanded }),
             false,
             'cart/toggleExpanded'
           );
         },
 
-        // Set expanded state
         setExpanded: (expanded) => {
-          set(
-            {
-              isExpanded: expanded,
-            },
-            false,
-            'cart/setExpanded'
-          );
+          set({ isExpanded: expanded }, false, 'cart/setExpanded');
         },
       }),
       {
-        name: 'shreehari-mart-cart', // localStorage key
-        partialize: (state) => ({
-          // Persist cart items
-          items: state.items,
-        }),
+        name: 'shreehari-mart-cart',
+        partialize: (state) => ({ items: state.items }),
         onRehydrateStorage: () => (state) => {
-          // Recalculate totals after hydration
           if (state && state.items.length > 0) {
             const totals = calculateTotals(state.items);
             state.totalItems = totals.totalItems;
@@ -245,15 +242,12 @@ export const useCartStore = create<CartStore>()(
         },
       }
     ),
-    {
-      name: 'CartStore', // DevTools name
-    }
+    { name: 'CartStore' }
   )
 );
 
-/**
- * Selector hooks for optimized re-renders
- */
+export const cartLineKey = lineKeyFor;
+
 export const useCartItems = () => useCartStore((state) => state.items);
 export const useCartTotalItems = () =>
   useCartStore((state) => state.totalItems);

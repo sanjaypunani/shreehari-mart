@@ -22,3 +22,6 @@ export {
   useCartExpanded,
 } from './cart-store';
 export type { CartItem } from './cart-store';
+
+export { useAddressesStore, useDefaultAddress } from './addresses-store';
+export type { Address, AddressDraft, AddressLabel } from './addresses-store';

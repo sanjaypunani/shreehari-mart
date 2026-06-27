@@ -8,6 +8,7 @@ export function ViewportInsetsObserver() {
   useEffect(() => {
     const root = document.documentElement;
     let rafId: number | null = null;
+    const zoomHotkeys = new Set(['+', '-', '=', '0']);
 
     const updateViewportInsets = () => {
       const visualViewport = window.visualViewport;
@@ -37,11 +38,40 @@ export function ViewportInsetsObserver() {
 
       rafId = window.requestAnimationFrame(updateViewportInsets);
     };
+    const preventGestureZoom = (event: Event) => {
+      event.preventDefault();
+    };
+    const preventPinchZoom = (event: TouchEvent) => {
+      if (event.touches.length > 1) {
+        event.preventDefault();
+      }
+    };
+    const preventWheelZoom = (event: WheelEvent) => {
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+      }
+    };
+    const preventKeyboardZoom = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && zoomHotkeys.has(event.key)) {
+        event.preventDefault();
+      }
+    };
 
     updateViewportInsets();
 
     window.addEventListener('resize', requestUpdate);
     window.addEventListener('orientationchange', requestUpdate);
+    document.addEventListener('gesturestart', preventGestureZoom, {
+      passive: false,
+    } as AddEventListenerOptions);
+    document.addEventListener('gesturechange', preventGestureZoom, {
+      passive: false,
+    } as AddEventListenerOptions);
+    document.addEventListener('touchmove', preventPinchZoom, {
+      passive: false,
+    });
+    window.addEventListener('wheel', preventWheelZoom, { passive: false });
+    window.addEventListener('keydown', preventKeyboardZoom);
     window.visualViewport?.addEventListener('resize', requestUpdate);
     window.visualViewport?.addEventListener('scroll', requestUpdate);
 
@@ -52,6 +82,11 @@ export function ViewportInsetsObserver() {
 
       window.removeEventListener('resize', requestUpdate);
       window.removeEventListener('orientationchange', requestUpdate);
+      document.removeEventListener('gesturestart', preventGestureZoom);
+      document.removeEventListener('gesturechange', preventGestureZoom);
+      document.removeEventListener('touchmove', preventPinchZoom);
+      window.removeEventListener('wheel', preventWheelZoom);
+      window.removeEventListener('keydown', preventKeyboardZoom);
       window.visualViewport?.removeEventListener('resize', requestUpdate);
       window.visualViewport?.removeEventListener('scroll', requestUpdate);
     };

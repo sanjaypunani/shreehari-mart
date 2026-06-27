@@ -23,6 +23,7 @@ export function ProductComponent() {
       basePrice: 20.5,
       baseUnit: 'gm',
       isAvailable: true,
+      selectedVariant: '500gm',
     });
   };
 
@@ -54,25 +55,24 @@ export function CartSummary() {
   );
 }
 
-// Example 4: Update item quantity
+// Example 4: Step a specific variant line up or down
 export function CartItemQuantity({
-  itemId,
+  productId,
+  variant,
   currentQuantity,
 }: {
-  itemId: string;
+  productId: string;
+  variant: string;
   currentQuantity: number;
 }) {
-  const updateQuantity = useCartStore((state) => state.updateQuantity);
+  const incrementLine = useCartStore((state) => state.incrementLine);
+  const decrementLine = useCartStore((state) => state.decrementLine);
 
   return (
     <div>
-      <button onClick={() => updateQuantity(itemId, currentQuantity - 1)}>
-        -
-      </button>
+      <button onClick={() => decrementLine(productId, variant)}>-</button>
       <span>{currentQuantity}</span>
-      <button onClick={() => updateQuantity(itemId, currentQuantity + 1)}>
-        +
-      </button>
+      <button onClick={() => incrementLine(productId, variant)}>+</button>
     </div>
   );
 }

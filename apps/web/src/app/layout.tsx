@@ -4,35 +4,30 @@ import '@mantine/carousel/styles.css';
 import '@mantine/notifications/styles.css';
 import type { Metadata, Viewport } from 'next';
 import { mantineHtmlProps } from '@mantine/core';
-import { Rubik, Nunito_Sans } from 'next/font/google';
+import { Inter } from 'next/font/google';
 
 import { Providers } from './providers';
 
-const rubik = Rubik({
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['500', '600', '700', '800'],
-  variable: '--font-heading',
-  display: 'swap',
-});
-
-const nunitoSans = Nunito_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-body',
   display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'Shreehari Mart - Your One-Stop Shop',
-  description: 'Quality products at affordable prices for all your daily needs',
+  title: 'Cropzo - Farm to Door Veggies',
+  description: 'Harvested yesterday. At your door tomorrow. Fresh farm-to-door vegetables and fruits.',
   manifest: '/manifest.json',
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#F5F8FC',
+  themeColor: '#F5F1E8',
 };
 
 export default function RootLayout({
@@ -40,10 +35,21 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const htmlClassName = `${rubik.variable} ${nunitoSans.variable}`;
-
   return (
-    <html lang="en" {...mantineHtmlProps} className={htmlClassName}>
+    <html lang="en" {...mantineHtmlProps} className={inter.variable}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap"
+          rel="stylesheet"
+        />
+        <style>{`
+          :root {
+            --font-heading: 'Instrument Serif', Georgia, serif;
+          }
+        `}</style>
+      </head>
       <body>
         <Providers>{children}</Providers>
       </body>

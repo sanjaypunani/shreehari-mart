@@ -1,18 +1,10 @@
 'use client';
 
 import React from 'react';
-import {
-  Box,
-  Stack,
-  TextInput,
-  Select,
-  Button,
-  Alert,
-} from '@mantine/core';
+import { Box, Alert, Select } from '@mantine/core';
+import { IconChevronLeft } from '@tabler/icons-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { colors, spacing, typography, radius } from '../../../theme';
-import { Text } from '../../../components/ui';
-import { StickyPageHeader } from '../../../components/navigation/StickyPageHeader';
+import { colors } from '../../../theme';
 import { authApi, buildingsApi, societiesApi } from '../../../lib/api/services';
 import { getErrorMessage } from '../../../lib/api-client';
 import { useAppStore } from '../../../store/app-store';
@@ -46,35 +38,24 @@ function SignupPageContent() {
 
   React.useEffect(() => {
     let cancelled = false;
-
     const loadSocieties = async () => {
       try {
         setLoadingSocieties(true);
         const response = await societiesApi.getAll();
-
-        if (cancelled) {
-          return;
-        }
-
-        const options: Option[] = (response.data || []).map((society: any) => ({
-          value: society.id,
-          label: society.name,
-        }));
-
-        setSocietyOptions(options);
+        if (cancelled) return;
+        setSocietyOptions(
+          (response.data || []).map((society: any) => ({
+            value: society.id,
+            label: society.name,
+          }))
+        );
       } catch (error) {
-        if (!cancelled) {
-          setErrorMessage(getErrorMessage(error));
-        }
+        if (!cancelled) setErrorMessage(getErrorMessage(error));
       } finally {
-        if (!cancelled) {
-          setLoadingSocieties(false);
-        }
+        if (!cancelled) setLoadingSocieties(false);
       }
     };
-
     loadSocieties();
-
     return () => {
       cancelled = true;
     };
@@ -82,41 +63,29 @@ function SignupPageContent() {
 
   React.useEffect(() => {
     let cancelled = false;
-
     const loadBuildings = async () => {
       if (!societyId) {
         setBuildingOptions([]);
         setBuildingId(null);
         return;
       }
-
       try {
         setLoadingBuildings(true);
         const response = await buildingsApi.getAll({ societyId });
-
-        if (cancelled) {
-          return;
-        }
-
-        const options: Option[] = (response.data || []).map((building: any) => ({
-          value: building.id,
-          label: building.name,
-        }));
-
-        setBuildingOptions(options);
+        if (cancelled) return;
+        setBuildingOptions(
+          (response.data || []).map((building: any) => ({
+            value: building.id,
+            label: building.name,
+          }))
+        );
       } catch (error) {
-        if (!cancelled) {
-          setErrorMessage(getErrorMessage(error));
-        }
+        if (!cancelled) setErrorMessage(getErrorMessage(error));
       } finally {
-        if (!cancelled) {
-          setLoadingBuildings(false);
-        }
+        if (!cancelled) setLoadingBuildings(false);
       }
     };
-
     loadBuildings();
-
     return () => {
       cancelled = true;
     };
@@ -130,9 +99,7 @@ function SignupPageContent() {
     flatNumber.trim().length > 0;
 
   const handleSubmit = async () => {
-    if (!isFormValid || isSubmitting) {
-      return;
-    }
+    if (!isFormValid || isSubmitting) return;
 
     try {
       setIsSubmitting(true);
@@ -163,7 +130,7 @@ function SignupPageContent() {
         response.data.token
       );
 
-      router.push(returnUrl ? decodeURIComponent(returnUrl) : '/account');
+      router.replace(returnUrl ? decodeURIComponent(returnUrl) : '/account');
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
@@ -176,52 +143,95 @@ function SignupPageContent() {
       style={{
         minHeight: 'var(--app-viewport-height)',
         backgroundColor: colors.background,
-        paddingBottom: `calc(${spacing.xl} + var(--safe-area-bottom-with-keyboard))`,
-        scrollPaddingBottom: 'calc(140px + var(--safe-area-bottom-with-keyboard))',
+        color: colors.text.primary,
+        paddingBottom: 'calc(110px + var(--safe-area-bottom))',
       }}
     >
-      <StickyPageHeader
-        title="Complete Signup"
-        onBack={() => router.back()}
+      {/* Header */}
+      <div
+        style={{
+          padding: '12px 16px',
+          paddingTop: 'calc(var(--safe-area-top) + 12px)',
+          display: 'flex',
+          alignItems: 'center',
+        }}
       >
-        <Stack gap={2}>
-          <Text variant="secondary" size="sm">
-            Add your details for +91-{phone}
-          </Text>
-        </Stack>
-      </StickyPageHeader>
-
-      <Stack gap={spacing.lg} px={spacing.md} pt={spacing.md}>
-
-        {errorMessage && <Alert color="red">{errorMessage}</Alert>}
-
-        <Stack
-          gap={spacing.md}
+        <button
+          onClick={() => router.back()}
+          aria-label="Go back"
           style={{
-            backgroundColor: colors.surface,
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            background: colors.surface,
             border: `1px solid ${colors.border}`,
-            borderRadius: radius.lg,
-            padding: spacing.md,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
           }}
         >
-          <TextInput
-            label="Full Name"
-            placeholder="Enter full name"
+          <IconChevronLeft size={18} color={colors.text.primary} />
+        </button>
+      </div>
+
+      <div style={{ padding: '20px 24px 0' }}>
+        <div
+          style={{
+            fontFamily:
+              "var(--font-heading), 'Instrument Serif', Georgia, serif",
+            fontSize: 36,
+            lineHeight: 1.05,
+            letterSpacing: -0.6,
+          }}
+        >
+          A few <span style={{ fontStyle: 'italic' }}>last details</span>
+        </div>
+        <div
+          style={{
+            fontSize: 14,
+            color: colors.text.secondary,
+            marginTop: 8,
+            lineHeight: 1.5,
+          }}
+        >
+          Tell us where to deliver your fresh harvests for{' '}
+          <b style={{ color: colors.text.primary }}>+91 {phone}</b>
+        </div>
+
+        {errorMessage && (
+          <Alert color="red" radius="md" mt={20}>
+            {errorMessage}
+          </Alert>
+        )}
+
+        {/* Form */}
+        <SectionLabel style={{ marginTop: 28 }}>About you</SectionLabel>
+        <div style={{ marginTop: 8 }}>
+          <FormField
+            label="Full name"
+            placeholder="Juno Greene"
             value={name}
-            onChange={(event) => setName(event.currentTarget.value)}
+            onChange={(e) => setName(e.target.value)}
           />
-
-          <TextInput
-            label="Email Address"
-            placeholder="Enter email"
-            type="email"
+          <FormField
+            label="Email address"
+            placeholder="juno@willowbrook.co"
             value={email}
-            onChange={(event) => setEmail(event.currentTarget.value)}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
           />
+        </div>
 
+        <SectionLabel style={{ marginTop: 24 }}>
+          Delivery location
+        </SectionLabel>
+        <div style={{ marginTop: 8 }}>
+          <FieldLabel>Society</FieldLabel>
           <Select
-            label="Society"
-            placeholder={loadingSocieties ? 'Loading societies...' : 'Select society'}
+            placeholder={
+              loadingSocieties ? 'Loading societies…' : 'Select society'
+            }
             data={societyOptions}
             value={societyId}
             onChange={(value) => {
@@ -230,14 +240,27 @@ function SignupPageContent() {
             }}
             searchable
             disabled={loadingSocieties}
+            mb={12}
+            styles={{
+              input: {
+                padding: '14px 16px',
+                borderRadius: 14,
+                background: colors.surface,
+                border: `1px solid ${colors.border}`,
+                fontSize: 14,
+                color: colors.text.primary,
+                fontFamily: 'inherit',
+                height: 'auto',
+                minHeight: 48,
+              },
+            }}
           />
-
+          <FieldLabel>Building</FieldLabel>
           <Select
-            label="Building"
             placeholder={
               societyId
                 ? loadingBuildings
-                  ? 'Loading buildings...'
+                  ? 'Loading buildings…'
                   : 'Select building'
                 : 'Select society first'
             }
@@ -246,54 +269,160 @@ function SignupPageContent() {
             onChange={setBuildingId}
             searchable
             disabled={!societyId || loadingBuildings}
+            mb={12}
+            styles={{
+              input: {
+                padding: '14px 16px',
+                borderRadius: 14,
+                background: colors.surface,
+                border: `1px solid ${colors.border}`,
+                fontSize: 14,
+                color: colors.text.primary,
+                fontFamily: 'inherit',
+                height: 'auto',
+                minHeight: 48,
+              },
+            }}
           />
-
-          <TextInput
-            label="Flat Number"
-            placeholder="e.g. A-302"
+          <FormField
+            label="Flat number"
+            placeholder="A-302"
             value={flatNumber}
-            onChange={(event) => setFlatNumber(event.currentTarget.value)}
+            onChange={(e) => setFlatNumber(e.target.value)}
           />
-        </Stack>
+        </div>
 
-        <Button
-          fullWidth
-          size="lg"
-          color={colors.primary}
-          radius="md"
-          disabled={!isFormValid || isSubmitting}
-          loading={isSubmitting}
-          onClick={handleSubmit}
-          styles={{
-            root: {
-              height: '50px',
-              backgroundColor:
-                isFormValid && !isSubmitting ? colors.primary : '#FFCCB0',
-              color: colors.text.inverse,
-            },
-            label: {
-              fontSize: typography.fontSize.base,
-              fontWeight: typography.fontWeight.bold,
-            },
+        <div
+          style={{
+            marginTop: 14,
+            fontSize: 11,
+            color: colors.text.faint,
+            lineHeight: 1.6,
           }}
         >
-          COMPLETE SIGNUP
-        </Button>
-      </Stack>
+          By signing up you agree to receive order updates over SMS and email.
+          Standard rates may apply.
+        </div>
+      </div>
+
+      {/* Sticky save button */}
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          padding: '14px 20px',
+          paddingBottom: 'calc(14px + var(--safe-area-bottom))',
+          background: colors.surface,
+          borderTop: `1px solid ${colors.border}`,
+        }}
+      >
+        <button
+          disabled={!isFormValid || isSubmitting}
+          onClick={handleSubmit}
+          style={{
+            width: '100%',
+            height: 54,
+            borderRadius: 27,
+            background:
+              isFormValid && !isSubmitting ? colors.primary : colors.text.faint,
+            color: colors.text.inverse,
+            border: 'none',
+            fontSize: 14,
+            fontWeight: 700,
+            cursor:
+              isFormValid && !isSubmitting ? 'pointer' : 'not-allowed',
+            fontFamily: 'inherit',
+            letterSpacing: 0.3,
+          }}
+        >
+          {isSubmitting ? 'Creating account…' : 'COMPLETE SIGNUP'}
+        </button>
+      </div>
     </Box>
   );
 }
 
 export default function SignupPage() {
   return (
-    <React.Suspense
-      fallback={
-        <Box p={spacing.md}>
-          <Text>Loading signup...</Text>
-        </Box>
-      }
-    >
+    <React.Suspense fallback={null}>
       <SignupPageContent />
     </React.Suspense>
+  );
+}
+
+function FormField({
+  label,
+  placeholder,
+  value,
+  onChange,
+  type,
+}: {
+  label: string;
+  placeholder?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+}) {
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <FieldLabel>{label}</FieldLabel>
+      <input
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        type={type}
+        style={{
+          width: '100%',
+          padding: '14px 16px',
+          borderRadius: 14,
+          background: colors.surface,
+          border: `1px solid ${colors.border}`,
+          fontSize: 14,
+          fontFamily: 'inherit',
+          color: colors.text.primary,
+          outline: 'none',
+        }}
+      />
+    </div>
+  );
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        fontSize: 11,
+        color: colors.text.secondary,
+        fontWeight: 500,
+        marginBottom: 4,
+        paddingLeft: 4,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function SectionLabel({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      style={{
+        fontSize: 11,
+        letterSpacing: 1.5,
+        textTransform: 'uppercase',
+        color: colors.text.secondary,
+        ...style,
+      }}
+    >
+      {children}
+    </div>
   );
 }

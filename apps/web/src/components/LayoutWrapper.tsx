@@ -4,9 +4,10 @@ import React from 'react';
 import { AppShell, Box } from '@mantine/core';
 import { usePathname } from 'next/navigation';
 import { MobileHeader } from './MobileHeader';
-import { CartBar } from './cart';
+import { CartFab } from './cart';
 import { useCartStore } from '../store';
 import { BottomTabNavigation } from './BottomTabNavigation';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 
 export interface LayoutWrapperProps {
   children: React.ReactNode;
@@ -19,28 +20,53 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const isAccountFlow = pathname?.startsWith('/account');
   const isAuthEntryPage =
     pathname?.startsWith('/account/signup') ||
-    pathname?.startsWith('/account/verify');
+    pathname?.startsWith('/account/verify') ||
+    pathname === '/login';
   const isCategoryPage = pathname?.startsWith('/category/');
   const isCartPage = pathname === '/cart';
+  const isCheckoutPage = pathname === '/checkout';
+  const isProductPage = pathname?.startsWith('/product/');
+  const isSearchPage = pathname === '/search';
+  const isReferPage = pathname === '/refer';
+  const isSplashPage = pathname === '/splash';
   const isOrderSuccessPage = pathname?.startsWith('/order-success');
+  const isOrdersPage = pathname?.startsWith('/orders');
 
   const shouldHideHeader =
-    isAccountFlow || isCategoryPage || isCartPage || isOrderSuccessPage;
-  const shouldHideCart = isAccountFlow || isOrderSuccessPage;
+    isAccountFlow ||
+    isAuthEntryPage ||
+    isCategoryPage ||
+    isCartPage ||
+    isCheckoutPage ||
+    isProductPage ||
+    isSearchPage ||
+    isReferPage ||
+    isSplashPage ||
+    isOrderSuccessPage ||
+    isOrdersPage;
+  const shouldHideCart =
+    isAccountFlow || isOrderSuccessPage || isCheckoutPage || isSplashPage;
   const shouldShowBottomTabs =
-    !isCartPage && !isAuthEntryPage && !isOrderSuccessPage;
-  const shouldShowCartBar = !isCartPage && !shouldHideCart && hasCartItems;
+    !isCartPage &&
+    !isAuthEntryPage &&
+    !isOrderSuccessPage &&
+    !isCheckoutPage &&
+    !isProductPage &&
+    !isReferPage &&
+    !isSplashPage;
+  const shouldShowCartFab = !isCartPage && !shouldHideCart && hasCartItems;
   const shouldShowHeader = !shouldHideHeader;
 
+  // Scroll-driven auto-hide
+  const { scrollDirection, isAtTop, scrollRef } = useScrollDirection();
+  const chromeVisible = isAtTop || scrollDirection === 'up' || scrollDirection === null;
+
+  // Compact tab bar is ~56px total (36px inner + padding + safe area)
   const mainBottomPadding = isAccountFlow
     ? 0
-    : shouldShowCartBar && shouldShowBottomTabs
-      ? 'calc(76px + var(--mobile-bottom-tabs-total-height))'
-      : shouldShowCartBar
-        ? 'calc(76px + var(--safe-area-bottom))'
-        : shouldShowBottomTabs
-          ? 'var(--mobile-bottom-tabs-total-height)'
-          : 0;
+    : shouldShowBottomTabs
+      ? '64px'
+      : 0;
 
   return (
     <AppShell
@@ -48,35 +74,38 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
       footer={{ height: 'auto' }}
       padding={0}
     >
-      {/* <AppShell.Header> */}
-      {shouldShowHeader && <MobileHeader />}
-      {/* </AppShell.Header> */}
-
       <AppShell.Main>
         <Box
-          pb={mainBottomPadding}
           style={{
-            minHeight: 'var(--app-viewport-height)',
-            background:
-              'radial-gradient(circle at 0% 0%, rgba(31,122,99,0.08), transparent 35%), var(--brand-bg)',
+            height: 'var(--app-viewport-height)',
+            background: 'var(--brand-bg)',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
-          {children}
+          {shouldShowHeader && <MobileHeader headerVisible={chromeVisible} />}
+          <Box
+            ref={scrollRef}
+            pb={mainBottomPadding}
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+            }}
+          >
+            {children}
+          </Box>
         </Box>
       </AppShell.Main>
 
-      {/* Global Cart Bar - Fixed at bottom (hidden on cart page) */}
-      {shouldShowCartBar && (
-        <CartBar
-          bottomOffset={
-            shouldShowBottomTabs ? 'var(--mobile-bottom-tabs-total-height)' : '0px'
-          }
-          withSafeAreaInset={!shouldShowBottomTabs}
+      {shouldShowCartFab && (
+        <CartFab
+          visible={chromeVisible}
+          bottomOffset={shouldShowBottomTabs ? '56px' : '0px'}
         />
       )}
-      {shouldShowBottomTabs && <BottomTabNavigation />}
-
-      {/* <Footer /> */}
+      {shouldShowBottomTabs && <BottomTabNavigation visible={chromeVisible} />}
     </AppShell>
   );
 }

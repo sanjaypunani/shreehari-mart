@@ -5,92 +5,96 @@ import Link from 'next/link';
 import { Box, Group, Stack, UnstyledButton } from '@mantine/core';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
-  IconGridDots,
   IconHome2,
-  IconShoppingBag,
+  IconLeaf,
+  IconSearch,
+  IconReceipt,
   IconUser,
 } from '@tabler/icons-react';
-import { colors, shadow, typography } from '../theme';
+import { colors, typography } from '../theme';
 import { Text } from './ui';
-import { useCategories } from '../hooks/use-api';
+import { triggerHaptic } from '../utils';
 
-type TabKey = 'home' | 'shop' | 'orders' | 'account';
+type TabKey = 'home' | 'shop' | 'search' | 'orders' | 'account';
 
 interface BottomTabItem {
   key: TabKey;
   label: string;
   href: string;
-  icon: React.ComponentType<{ size?: string | number; color?: string; stroke?: string | number }>;
+  icon: React.ComponentType<{
+    size?: string | number;
+    color?: string;
+    stroke?: string | number;
+  }>;
 }
 
-const getActiveTab = (pathname: string, section: string | null): TabKey => {
-  if (pathname.startsWith('/orders')) {
-    return 'orders';
-  }
-
-  if (pathname.startsWith('/account')) {
-    if (section === 'orders') {
-      return 'orders';
-    }
-
-    return 'account';
-  }
-
-  if (pathname.startsWith('/category/')) {
-    return 'shop';
-  }
-
+const getActiveTab = (pathname: string, _section: string | null): TabKey => {
+  if (pathname.startsWith('/orders')) return 'orders';
+  if (pathname.startsWith('/account')) return 'account';
+  if (pathname.startsWith('/category/')) return 'shop';
+  if (pathname.startsWith('/search')) return 'search';
   return 'home';
 };
 
-function BottomTabNavigationContent() {
+interface BottomTabNavigationContentProps {
+  /** Controls visibility for scroll auto-hide. Default true. */
+  visible?: boolean;
+}
+
+function BottomTabNavigationContent({
+  visible = true,
+}: BottomTabNavigationContentProps) {
   const pathname = usePathname() || '/';
   const searchParams = useSearchParams();
   const activeTab = getActiveTab(pathname, searchParams.get('section'));
-  const { data: categoriesResponse } = useCategories();
-  const firstCategoryId = categoriesResponse?.data?.[0]?.id;
   const categoryHref = pathname.startsWith('/category/')
     ? pathname
-    : firstCategoryId
-      ? `/category/${firstCategoryId}`
-      : '/';
+    : '/category/all';
 
   const tabs: BottomTabItem[] = [
     { key: 'home', label: 'Home', href: '/', icon: IconHome2 },
-    { key: 'shop', label: 'Shop', href: categoryHref, icon: IconGridDots },
-    { key: 'orders', label: 'Orders', href: '/account?section=orders', icon: IconShoppingBag },
-    { key: 'account', label: 'Account', href: '/account', icon: IconUser },
+    { key: 'shop', label: 'Shop', href: categoryHref, icon: IconLeaf },
+    { key: 'search', label: 'Search', href: '/search', icon: IconSearch },
+    { key: 'orders', label: 'Orders', href: '/orders', icon: IconReceipt },
+    { key: 'account', label: 'Profile', href: '/account', icon: IconUser },
   ];
 
+  // Liquid-glass capsule. Heavy backdrop blur + low-opacity tint, white
+  // hairline highlight on top, soft outer shadow for the floating feel.
   return (
     <Box
       hiddenFrom="sm"
       style={{
         position: 'fixed',
-        left: 'max(10px, var(--safe-area-left))',
-        right: 'max(10px, var(--safe-area-right))',
-        bottom: 0,
-        zIndex: 1100,
-        height: 'var(--mobile-bottom-tabs-total-height)',
-        paddingBottom: 'var(--mobile-bottom-tabs-bottom-padding)',
-        paddingLeft: 10,
-        paddingRight: 10,
-        borderTop: `1px solid ${colors.border}`,
-        borderLeft: `1px solid ${colors.border}`,
-        borderRight: `1px solid ${colors.border}`,
-        borderTopLeftRadius: 18,
-        borderTopRightRadius: 18,
-        backgroundColor: 'rgba(255, 255, 255, 0.98)',
-        backdropFilter: 'blur(12px)',
-        boxShadow: `0 -10px 26px rgba(15, 23, 42, 0.12), ${shadow.sm}`,
+        left: 14,
+        right: 14,
+        bottom: 'calc(4px + var(--safe-area-bottom))',
+        zIndex: 90,
+        background: 'rgba(255, 253, 247, 0.55)',
+        backdropFilter: 'blur(22px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(22px) saturate(180%)',
+        borderRadius: 24,
+        padding: '3px 6px',
+        border: '1px solid rgba(255, 255, 255, 0.4)',
+        boxShadow: [
+          '0 14px 40px rgba(28, 42, 33, 0.18)',
+          '0 2px 8px rgba(28, 42, 33, 0.08)',
+          'inset 0 1px 0 rgba(255, 255, 255, 0.7)',
+          'inset 0 -1px 0 rgba(28, 42, 33, 0.05)',
+        ].join(', '),
+        // Scroll auto-hide
+        transform: visible
+          ? 'translateY(0)'
+          : 'translateY(calc(100% + 30px))',
+        transition: 'transform 0.3s cubic-bezier(.4,0,.2,1)',
       }}
     >
       <Group
         grow
         wrap="nowrap"
-        gap={4}
+        gap={2}
         align="stretch"
-        style={{ minHeight: 'var(--mobile-bottom-tabs-height)' }}
+        style={{ minHeight: 36 }}
       >
         {tabs.map((tab) => {
           const isActive = tab.key === activeTab;
@@ -102,24 +106,44 @@ function BottomTabNavigationContent() {
               key={tab.key}
               component={Link}
               href={tab.href}
+              onClick={() => triggerHaptic('selection')}
+              aria-current={isActive ? 'page' : undefined}
               style={{
-                minHeight: 'var(--mobile-bottom-tabs-height)',
                 minWidth: 'var(--touch-target-size)',
-                borderRadius: 12,
+                borderRadius: 18,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 background: isActive
-                  ? 'linear-gradient(145deg, rgba(31, 122, 99, 0.2), rgba(31, 122, 99, 0.08))'
+                  ? 'rgba(45, 74, 43, 0.14)'
                   : 'transparent',
+                boxShadow: isActive
+                  ? 'inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 0 rgba(28,42,33,0.06)'
+                  : 'none',
                 color,
-                transition: 'all 180ms ease',
+                transition:
+                  'background 220ms cubic-bezier(.2,.8,.2,1), transform 120ms ease',
+                padding: '3px 4px',
+              }}
+              onPointerDown={(e) => {
+                (e.currentTarget as HTMLElement).style.transform =
+                  'scale(0.94)';
+              }}
+              onPointerUp={(e) => {
+                (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+              }}
+              onPointerLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
               }}
             >
-              <Stack gap={2} align="center" justify="center">
-                <Icon size={20} color={color} stroke={isActive ? 2.4 : 2} />
+              <Stack gap={1} align="center" justify="center">
+                <Icon
+                  size={18}
+                  color={color}
+                  stroke={isActive ? 2.2 : 1.8}
+                />
                 <Text
-                  size="11px"
+                  size="9px"
                   fw={
                     isActive
                       ? typography.fontWeight.semibold
@@ -138,10 +162,14 @@ function BottomTabNavigationContent() {
   );
 }
 
-export function BottomTabNavigation() {
+export interface BottomTabNavigationProps {
+  visible?: boolean;
+}
+
+export function BottomTabNavigation({ visible = true }: BottomTabNavigationProps) {
   return (
     <React.Suspense fallback={null}>
-      <BottomTabNavigationContent />
+      <BottomTabNavigationContent visible={visible} />
     </React.Suspense>
   );
 }

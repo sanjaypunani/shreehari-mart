@@ -1,49 +1,48 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Box, Group, ActionIcon, ScrollArea, Skeleton, SimpleGrid } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { IconSearch } from '@tabler/icons-react';
-import { useRouter } from 'next/navigation';
-import { colors, spacing, typography } from '../../theme';
-import { Text } from '../ui';
-import { ProductGrid, ProductDetailDrawer } from '../products';
+import { Box, ScrollArea, Skeleton, SimpleGrid } from '@mantine/core';
+import { IconSearch, IconChevronLeft } from '@tabler/icons-react';
+import { useRouter, useParams } from 'next/navigation';
+import { colors } from '../../theme';
+import {
+  ProductCard,
+  VariantSheet,
+  VariantSheetProduct,
+} from '../products';
 import { CategorySidebar } from './CategorySidebar';
-import { ProductSearchDialog } from '../search';
-import { StickyPageHeader } from '../navigation/StickyPageHeader';
 import { useProducts, useCategory, useCategories } from '../../hooks/use-api';
 import { ProductDto } from '@shreehari/types';
 import { useCartStore } from '../../store';
 import { toApiAssetUrl } from '../../config/api';
 
-export interface CategoryDetailProps {
-  categoryId: string;
-}
+const ALL_CATEGORY_ID = 'all';
 
-export function CategoryDetail({ categoryId }: CategoryDetailProps) {
+export function CategoryDetail() {
   const router = useRouter();
-  const [selectedCategory, setSelectedCategory] = useState(categoryId);
+  const params = useParams<{ id: string }>();
+  const categoryId = params?.id ?? ALL_CATEGORY_ID;
+  const isAll = categoryId === ALL_CATEGORY_ID;
+  const cartItems = useCartStore((state) => state.items);
+  const hasCartItems = cartItems.length > 0;
+  const [variantSheetProduct, setVariantSheetProduct] =
+    useState<VariantSheetProduct | null>(null);
 
-  // Get cart store actions
-  const addItem = useCartStore((state) => state.addItem);
-  const hasCartItems = useCartStore((state) => state.items.length > 0);
-
-  // Fetch current category and all categories from API
-  const { data: categoryResponse, isLoading: categoryLoading } = useCategory(selectedCategory);
+  const { data: categoryResponse, isLoading: categoryLoading } =
+    useCategory(isAll ? '' : categoryId);
   const { data: allCategoriesResponse } = useCategories();
-  const [searchOpened, { open: openSearch, close: closeSearch }] = useDisclosure(false);
 
-  const categoryName = categoryResponse?.data?.name ?? 'Category';
+  const categoryName = isAll
+    ? 'All products'
+    : categoryResponse?.data?.name ?? 'Category';
 
-  // Fetch products filtered by category
   const { data: productsResponse, isLoading } = useProducts({
     page: 1,
     limit: 200,
     isAvailable: true,
-    categoryId: selectedCategory,
+    categoryId: isAll ? undefined : categoryId,
   });
 
-  // Map API response to component format
   const products = (productsResponse?.data || []).map(
     (apiProduct: ProductDto) => ({
       id: apiProduct.id,
@@ -54,49 +53,39 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
       unit: apiProduct.unit,
       discount: apiProduct.discount ?? undefined,
       quantity: `${apiProduct.quantity}${apiProduct.unit}`,
-      deliveryTime: '30 mins',
+      deliveryTime: 'Next-day',
     })
   );
 
-  const sidebarCategories = (allCategoriesResponse?.data ?? []).map((cat: any) => ({
-    id: cat.id,
-    name: cat.name,
-    image: toApiAssetUrl(cat.imageUrl),
-  }));
+  const sidebarCategories = [
+    { id: ALL_CATEGORY_ID, name: 'All', image: '' },
+    ...(allCategoriesResponse?.data ?? []).map((cat: any) => ({
+      id: cat.id,
+      name: cat.name,
+      image: toApiAssetUrl(cat.imageUrl),
+    })),
+  ];
 
   const handleAddToCart = (productId: string) => {
     const product = products.find((p) => p.id === productId);
-    if (product) {
-      // Add to cart using cart store with base product data
-      addItem({
-        id: product.id,
-        name: product.name,
-        image: product.image,
-        price: product.price,
-        unit: product.unit,
-        productQuantity: product.quantity,
-        orderedQuantity: product.baseQuantity,
-        baseQuantity: product.baseQuantity,
-        basePrice: product.price,
-        baseUnit: product.unit,
-        isAvailable: true,
-      });
-    }
+    if (!product) return;
+    setVariantSheetProduct({
+      id: product.id,
+      name: product.name,
+      image: product.image,
+      price: product.price,
+      baseQuantity: product.baseQuantity,
+      unit: product.unit,
+      discount: product.discount,
+      quantity: product.quantity,
+    });
   };
 
   const handleSidebarCategorySelect = (newCategoryId: string) => {
-    setSelectedCategory(newCategoryId);
     router.replace(`/category/${newCategoryId}`);
   };
 
-  const [drawerOpened, setDrawerOpened] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>();
-
-  const handleProductClick = (productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    setSelectedProduct(product);
-    setDrawerOpened(true);
-  };
+  const handleProductClick = handleAddToCart;
 
   return (
     <Box
@@ -105,89 +94,138 @@ export function CategoryDetail({ categoryId }: CategoryDetailProps) {
         height: 'var(--app-viewport-height)',
         display: 'flex',
         flexDirection: 'column',
+        color: colors.text.primary,
       }}
     >
-      <StickyPageHeader
-        title={
-          categoryLoading ? (
+      {/* Top bar - Cropzo style */}
+      <Box
+        style={{
+          padding: '12px 16px',
+          paddingTop: 'calc(var(--safe-area-top) + 12px)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          background: colors.background,
+          borderBottom: `1px solid ${colors.border}`,
+        }}
+      >
+        {!isAll && (
+          <button
+            onClick={() => router.push('/')}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              background: colors.surface,
+              border: `1px solid ${colors.border}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            <IconChevronLeft size={18} color={colors.text.primary} />
+          </button>
+        )}
+        <div
+          style={{
+            flex: 1,
+            fontSize: 16,
+            fontWeight: 600,
+            letterSpacing: -0.2,
+          }}
+        >
+          {categoryLoading ? (
             <Skeleton height={20} width={120} radius="sm" />
           ) : (
             categoryName
-          )
-        }
-        onBack={() => router.push('/')}
-        rightSlot={
-          <ActionIcon
-            variant="subtle"
-            onClick={openSearch}
-            aria-label="Search products"
-            style={{
-              width: 'var(--touch-target-size)',
-              height: 'var(--touch-target-size)',
-              borderRadius: '9999px',
-              border: `1px solid ${colors.border}`,
-              backgroundColor: colors.surface,
-              color: colors.text.primary,
-            }}
-          >
-            <IconSearch size={21} />
-          </ActionIcon>
-        }
-      />
+          )}
+        </div>
+        <button
+          onClick={() => router.push('/search')}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            background: colors.surface,
+            border: `1px solid ${colors.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <IconSearch size={17} color={colors.text.primary} />
+        </button>
+      </Box>
 
-      {/* Main Content Area */}
-      <Box style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Sidebar */}
+      {/* Two-column layout */}
+      <Box style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        {/* Left: category rail */}
         <CategorySidebar
           categories={sidebarCategories}
-          selectedCategoryId={selectedCategory}
+          selectedCategoryId={categoryId}
           onSelectCategory={handleSidebarCategorySelect}
         />
 
-        {/* Product Area */}
+        {/* Right: products */}
         <Box
           style={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            backgroundColor: 'transparent',
+            overflow: 'hidden',
           }}
         >
-            {/* Product Grid */}
-            <ScrollArea style={{ flex: 1 }} p={spacing.sm}>
-                {isLoading ? (
-                  <SimpleGrid cols={{ base: 2, sm: 2, md: 3, lg: 4 }} spacing={spacing.sm} p={spacing.sm}>
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <Skeleton key={i} height={200} radius="md" />
-                    ))}
-                  </SimpleGrid>
-                ) : (
-                  <ProductGrid
-                    title=""
-                    products={products}
-                    columns={{ base: 2, xs: 2, sm: 2, md: 3, lg: 4 }}
-                    onProductClick={handleProductClick}
-                    onAddToCart={handleAddToCart}
-                  />
-                )}
-                <Box
-                  h={
-                    hasCartItems
-                      ? 'calc(76px + var(--mobile-bottom-tabs-total-height))'
-                      : 'var(--mobile-bottom-tabs-total-height)'
-                  }
-                />
-            </ScrollArea>
+          {/* Product grid */}
+          <ScrollArea style={{ flex: 1 }}>
+            <Box style={{ padding: '6px 10px 30px' }}>
+              {isLoading ? (
+                <SimpleGrid
+                  cols={{ base: 2, sm: 2, md: 3, lg: 4 }}
+                  spacing={8}
+                >
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} height={200} radius={10} />
+                  ))}
+                </SimpleGrid>
+              ) : (
+                <SimpleGrid
+                  cols={{ base: 2, sm: 2, md: 3, lg: 4 }}
+                  spacing={12}
+                >
+                  {products.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      id={product.id}
+                      name={product.name}
+                      image={product.image}
+                      price={product.price}
+                      discount={product.discount}
+                      quantity={product.quantity}
+                      deliveryTime={product.deliveryTime}
+                      onClick={handleProductClick}
+                      onAddToCart={handleAddToCart}
+                    />
+                  ))}
+                </SimpleGrid>
+              )}
+              <Box
+                h={
+                  hasCartItems
+                    ? 'calc(76px + 88px)'
+                    : '88px'
+                }
+              />
+            </Box>
+          </ScrollArea>
         </Box>
       </Box>
 
-      <ProductDetailDrawer
-        opened={drawerOpened}
-        onClose={() => setDrawerOpened(false)}
-        product={selectedProduct}
+      <VariantSheet
+        product={variantSheetProduct}
+        onClose={() => setVariantSheetProduct(null)}
       />
-
-      <ProductSearchDialog opened={searchOpened} onClose={closeSearch} />
     </Box>
   );
 }

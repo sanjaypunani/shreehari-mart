@@ -1,26 +1,30 @@
 'use client';
 
-import { Container, Stack, Box, Skeleton, SimpleGrid, Group } from '@mantine/core';
+import { Box, Stack, Skeleton } from '@mantine/core';
 import { useRouter } from 'next/navigation';
 import { CategoryGrid } from '../../components/home';
-import { ProductGrid, ProductDetailDrawer } from '../../components/products';
-import { colors, spacing, typography } from '../../theme';
+import {
+  ProductGrid,
+  VariantSheet,
+  VariantSheetProduct,
+} from '../../components/products';
+import { colors, spacing } from '../../theme';
 import { useState } from 'react';
 import { useProducts, useCategories } from '../../hooks/use-api';
 import { ProductDto } from '@shreehari/types';
-import { useCartStore } from '../../store';
 import { toApiAssetUrl } from '../../config/api';
 import { Text } from '../../components/ui';
+import {
+  IconTruck,
+  IconChevronRight,
+} from '@tabler/icons-react';
 
 export const HomeRoot = () => {
-  const [drawerOpened, setDrawerOpened] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>();
+  const [variantSheetProduct, setVariantSheetProduct] =
+    useState<VariantSheetProduct | null>(null);
 
-  // Get cart store actions
-  const addItem = useCartStore((state) => state.addItem);
-
-  // Fetch categories from API
-  const { data: categoriesResponse, isLoading: categoriesLoading } = useCategories();
+  const { data: categoriesResponse, isLoading: categoriesLoading } =
+    useCategories();
 
   const categories = (categoriesResponse?.data ?? []).map((cat: any) => ({
     id: cat.id,
@@ -28,14 +32,12 @@ export const HomeRoot = () => {
     image: toApiAssetUrl(cat.imageUrl),
   }));
 
-  // Fetch products from API
-  const { data: productsResponse, isLoading } = useProducts({
+  const { data: productsResponse } = useProducts({
     page: 1,
     limit: 100,
     isAvailable: true,
   });
 
-  // Map API response to component format
   const products = (productsResponse?.data || []).map(
     (apiProduct: ProductDto) => ({
       id: apiProduct.id,
@@ -46,9 +48,18 @@ export const HomeRoot = () => {
       unit: apiProduct.unit,
       discount: apiProduct.discount ?? undefined,
       quantity: `${apiProduct.quantity}${apiProduct.unit}`,
-      deliveryTime: '30 mins',
+      deliveryTime: 'Next-day',
+      categoryId: apiProduct.categoryId ?? null,
+      categoryName: apiProduct.categoryName ?? null,
     })
   );
+
+  const productsByCategory = categories
+    .map((cat) => ({
+      ...cat,
+      items: products.filter((p) => p.categoryId === cat.id),
+    }))
+    .filter((cat) => cat.items.length > 0);
 
   const router = useRouter();
 
@@ -56,168 +67,234 @@ export const HomeRoot = () => {
     router.push(`/category/${categoryId}`);
   };
 
-  const handleProductClick = (productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    setSelectedProduct(product);
-    setDrawerOpened(true);
-  };
-
   const handleAddToCart = (productId: string) => {
     const product = products.find((p) => p.id === productId);
-    if (product) {
-      // Add to cart using cart store with base product data
-      addItem({
-        id: product.id,
-        name: product.name,
-        image: product.image,
-        price: product.price,
-        unit: product.unit,
-        productQuantity: product.quantity,
-        orderedQuantity: product.baseQuantity,
-        baseQuantity: product.baseQuantity,
-        basePrice: product.price,
-        baseUnit: product.unit,
-        isAvailable: true,
-      });
-    }
+    if (!product) return;
+    setVariantSheetProduct({
+      id: product.id,
+      name: product.name,
+      image: product.image,
+      price: product.price,
+      baseQuantity: product.baseQuantity,
+      unit: product.unit,
+      discount: product.discount,
+      quantity: product.quantity,
+    });
   };
 
+  const handleProductClick = handleAddToCart;
+
   return (
-    <Container size="xl" px={spacing.xs} py={spacing.sm}>
-      <Stack gap={spacing.sm}>
+    <Box pb={spacing.xl}>
+      <Stack gap={0}>
+        {/* Hero Banner */}
         <Box
           style={{
-            borderRadius: 20,
-            padding: spacing.md,
-            background:
-              'linear-gradient(145deg, rgba(31,122,99,0.92) 0%, rgba(28,100,82,0.98) 62%, rgba(20,81,67,1) 100%)',
-            color: colors.text.inverse,
-            boxShadow: '0 14px 28px rgba(31, 122, 99, 0.35)',
-            overflow: 'hidden',
+            margin: '14px 20px 0',
             position: 'relative',
+            borderRadius: 24,
+            overflow: 'hidden',
+            height: 160,
           }}
         >
           <Box
             style={{
               position: 'absolute',
-              right: -40,
-              top: -50,
-              width: 170,
-              height: 170,
-              borderRadius: '50%',
-              background: 'rgba(255, 255, 255, 0.08)',
+              inset: 0,
+              background: colors.primary,
             }}
           />
-          <Stack gap={6} style={{ position: 'relative', zIndex: 1 }}>
-            <Text
-              size="xs"
-              style={{
-                opacity: 0.92,
-                fontWeight: typography.fontWeight.semibold,
-                textTransform: 'uppercase',
-                letterSpacing: '0.07em',
-              }}
-            >
-              Everyday Essentials
-            </Text>
-            <Text
-              style={{
-                fontSize: '26px',
-                lineHeight: 1.1,
-                fontWeight: typography.fontWeight.bold,
-                letterSpacing: '-0.03em',
-                maxWidth: 260,
-              }}
-            >
-              Fresh groceries in 30 minutes
-            </Text>
-            <Text
-              size="sm"
-              style={{
-                opacity: 0.88,
-                maxWidth: 280,
-                lineHeight: typography.lineHeight.normal,
-              }}
-            >
-              Handpicked fruits, vegetables and daily essentials at smart prices.
-            </Text>
-            <Group gap={spacing.xs} mt={spacing.xs}>
-              <Box
+          <Box
+            style={{
+              position: 'absolute',
+              right: -30,
+              top: -30,
+              width: 220,
+              height: 220,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              opacity: 0.15,
+              background: 'rgba(255,255,255,0.5)',
+            }}
+          />
+          <Box
+            style={{
+              position: 'relative',
+              padding: 22,
+              color: colors.text.inverse,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div>
+              <div
                 style={{
-                  borderRadius: 999,
-                  border: '1px solid rgba(255,255,255,0.35)',
-                  padding: '4px 10px',
-                  fontSize: '11px',
-                  fontWeight: typography.fontWeight.semibold,
+                  fontSize: 10,
+                  letterSpacing: 2,
+                  opacity: 0.8,
+                  textTransform: 'uppercase' as const,
                 }}
               >
-                No minimum order
-              </Box>
-              <Box
+                This week's harvest
+              </div>
+              <div
                 style={{
-                  borderRadius: 999,
-                  border: '1px solid rgba(255,255,255,0.35)',
-                  padding: '4px 10px',
-                  fontSize: '11px',
-                  fontWeight: typography.fontWeight.semibold,
+                  fontFamily:
+                    "var(--font-heading), 'Instrument Serif', Georgia, serif",
+                  fontSize: 28,
+                  lineHeight: 1.05,
+                  marginTop: 8,
+                  maxWidth: 230,
                 }}
               >
-                Same day delivery
-              </Box>
-            </Group>
-          </Stack>
+                Autumn{' '}
+                <span style={{ fontStyle: 'italic' }}>roots</span>
+                <br />& brassicas
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div
+                style={{
+                  padding: '6px 12px',
+                  background: 'rgba(255,255,255,0.2)',
+                  borderRadius: 20,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                Up to 30% off
+              </div>
+              <IconChevronRight size={16} color={colors.text.inverse} />
+            </div>
+          </Box>
         </Box>
 
-        {categoriesLoading ? (
+        {/* Categories Rail */}
+        <Box mt={28}>
+          {categoriesLoading ? (
+            <Box px={20}>
+              <div
+                style={{
+                  fontFamily:
+                    "var(--font-heading), 'Instrument Serif', Georgia, serif",
+                  fontSize: 24,
+                  fontWeight: 400,
+                  letterSpacing: -0.3,
+                  color: colors.text.primary,
+                  lineHeight: 1.15,
+                  marginBottom: 14,
+                }}
+              >
+                Shop by category
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 12,
+                  overflowX: 'auto',
+                }}
+              >
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton
+                    key={i}
+                    width={96}
+                    height={96}
+                    radius={22}
+                    style={{ flexShrink: 0 }}
+                  />
+                ))}
+              </div>
+            </Box>
+          ) : categories.length === 0 ? (
+            <Box px={20}>
+              <Text
+                size="md"
+                style={{ color: colors.text.secondary }}
+              >
+                No categories available yet.
+              </Text>
+            </Box>
+          ) : (
+            <CategoryGrid
+              title="Shop by category"
+              subtitle="Fresh · seasonal · local"
+              categories={categories}
+              onCategoryClick={handleCategoryClick}
+            />
+          )}
+        </Box>
+
+        {/* Products grouped by category */}
+        {productsByCategory.map((cat) => (
+          <Box key={cat.id} mt={32}>
+            <ProductGrid
+              title={cat.name}
+              action="See all"
+              onActionClick={() => router.push(`/category/${cat.id}`)}
+              products={cat.items}
+              onProductClick={handleProductClick}
+              onAddToCart={handleAddToCart}
+            />
+          </Box>
+        ))}
+
+        {/* Delivery Promise Strip */}
+        <Box
+          style={{
+            margin: '32px 20px 0',
+            padding: '20px 22px',
+            borderRadius: 24,
+            background: colors.surfaceAlt,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+          }}
+        >
           <Box
             style={{
-              backgroundColor: 'transparent',
-              padding: 0,
+              width: 46,
+              height: 46,
+              borderRadius: 23,
+              background: colors.primary,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
-            <Text size="md" fw={typography.fontWeight.semibold} variant="primary"
-              style={{ marginBottom: spacing.xs, fontSize: '16px', paddingInline: spacing.xs }}>
-              Shop by category
-            </Text>
-            <SimpleGrid cols={{ base: 4, xs: 4, sm: 5, md: 6, lg: 8 }} spacing={spacing.xs}>
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} height={96} radius="md" />
-              ))}
-            </SimpleGrid>
+            <IconTruck size={22} color={colors.text.inverse} />
           </Box>
-        ) : categories.length === 0 ? (
-          <Box
-            style={{
-              backgroundColor: 'transparent',
-              padding: 0,
-            }}
-          >
-            <Text size="md" fw={typography.fontWeight.semibold} variant="primary"
-              style={{ marginBottom: spacing.xs, fontSize: '16px', paddingInline: spacing.xs }}>
-              Shop by category
-            </Text>
-            <Text variant="secondary" size="sm" px={spacing.xs}>No categories available yet.</Text>
-          </Box>
-        ) : (
-          <CategoryGrid
-            title="Shop by category"
-            categories={categories}
-            onCategoryClick={handleCategoryClick}
-          />
-        )}
-        <ProductGrid
-          title="Top picks for you"
-          products={products}
-          onProductClick={handleProductClick}
-          onAddToCart={handleAddToCart}
-        />
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: colors.text.primary,
+              }}
+            >
+              Next-day farm-fresh
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                color: colors.text.secondary,
+                marginTop: 2,
+                lineHeight: 1.4,
+              }}
+            >
+              Order by 9pm. We harvest at dawn. Arrives 8am–noon.
+            </div>
+          </div>
+        </Box>
       </Stack>
 
-      <ProductDetailDrawer
-        opened={drawerOpened}
-        onClose={() => setDrawerOpened(false)}
-        product={selectedProduct}
+      <VariantSheet
+        product={variantSheetProduct}
+        onClose={() => setVariantSheetProduct(null)}
       />
-    </Container>
+    </Box>
   );
 };

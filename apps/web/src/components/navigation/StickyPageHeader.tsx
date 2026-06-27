@@ -1,10 +1,9 @@
 'use client';
 
 import React from 'react';
-import { ActionIcon, Box, Group } from '@mantine/core';
-import { IconArrowLeft } from '@tabler/icons-react';
-import { colors, radius, shadow, spacing, typography } from '../../theme';
-import { Text } from '../ui';
+import { Box, Group } from '@mantine/core';
+import { IconChevronLeft } from '@tabler/icons-react';
+import { colors, spacing, typography } from '../../theme';
 
 export interface StickyPageHeaderProps {
   title: React.ReactNode;
@@ -49,74 +48,76 @@ export function StickyPageHeader({
         position: 'sticky',
         top: 0,
         zIndex: 130,
-        backgroundColor: 'rgba(245, 248, 252, 0.94)',
-        backdropFilter: 'blur(10px)',
+        backgroundColor: colors.background,
         borderBottom: `1px solid ${colors.border}`,
-        boxShadow: shadow.sm,
       }}
     >
       <Box
-        px={spacing.md}
-        pt={'calc(var(--safe-area-top) + 8px)'}
-        pb={spacing.sm}
+        style={{
+          padding: '12px 16px',
+          paddingTop: 'calc(var(--safe-area-top) + 12px)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}
       >
-        <Group justify="space-between" align="center" wrap="nowrap">
-          <ActionIcon
-            variant="subtle"
-            onClick={onBack}
-            aria-label="Go back"
-            style={{
-              width: 'var(--touch-target-size)',
-              minWidth: 'var(--touch-target-size)',
-              height: 'var(--touch-target-size)',
-              borderRadius: radius.full,
-              border: `1px solid ${colors.border}`,
-              backgroundColor: colors.surface,
-              color: colors.text.primary,
-            }}
-          >
-            <IconArrowLeft size={22} />
-          </ActionIcon>
+        <button
+          onClick={onBack}
+          aria-label="Go back"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            background: colors.surface,
+            border: `1px solid ${colors.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <IconChevronLeft size={18} color={colors.text.primary} />
+        </button>
 
-          <Text
-            size="md"
-            fw={typography.fontWeight.bold}
-            style={{
-              textAlign: 'center',
-              lineHeight: 1.2,
-              letterSpacing: '-0.01em',
-            }}
-          >
-            {title}
-          </Text>
+        <div
+          style={{
+            flex: 1,
+            textAlign: 'center',
+            fontSize: 15,
+            fontWeight: 600,
+            color: colors.text.primary,
+          }}
+        >
+          {title}
+        </div>
 
-          <Box
-            style={{
-              width: 'var(--touch-target-size)',
-              minWidth: 'var(--touch-target-size)',
-              display: 'flex',
-              justifyContent: 'flex-end',
-            }}
-          >
-            {rightSlot || <Box w={'var(--touch-target-size)'} />}
-          </Box>
-        </Group>
-
-        {hasExtraContent && (
-          <Box
-            style={{
-              overflow: 'hidden',
-              maxHeight: isCompact ? 0 : 180,
-              opacity: isCompact ? 0 : 1,
-              transform: isCompact ? 'translateY(-8px)' : 'translateY(0)',
-              transition:
-                'max-height 220ms ease, opacity 200ms ease, transform 220ms ease',
-            }}
-          >
-            <Box pt={spacing.sm}>{children}</Box>
-          </Box>
-        )}
+        <div
+          style={{
+            width: 40,
+            display: 'flex',
+            justifyContent: 'flex-end',
+          }}
+        >
+          {rightSlot || <div style={{ width: 40 }} />}
+        </div>
       </Box>
+
+      {hasExtraContent && (
+        <Box
+          style={{
+            overflow: 'hidden',
+            maxHeight: isCompact ? 0 : 180,
+            opacity: isCompact ? 0 : 1,
+            transform: isCompact ? 'translateY(-8px)' : 'translateY(0)',
+            transition:
+              'max-height 220ms ease, opacity 200ms ease, transform 220ms ease',
+          }}
+        >
+          <Box pt={spacing.sm} px={spacing.md}>
+            {children}
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }

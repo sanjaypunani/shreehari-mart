@@ -1,20 +1,10 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
-import {
-  Box,
-  Stack,
-  Button,
-  Center,
-  ThemeIcon,
-  PinInput,
-  Alert,
-} from '@mantine/core';
-import { IconDeviceMobile } from '@tabler/icons-react';
+import { Box, Alert, PinInput } from '@mantine/core';
+import { IconChevronLeft } from '@tabler/icons-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { colors, spacing, typography } from '../../../theme';
-import { Text } from '../../../components/ui';
-import { StickyPageHeader } from '../../../components/navigation/StickyPageHeader';
+import { colors } from '../../../theme';
 import { authApi } from '../../../lib/api/services';
 import { getErrorMessage } from '../../../lib/api-client';
 import { useAppStore } from '../../../store/app-store';
@@ -32,14 +22,22 @@ function VerifyContent() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(30);
+
+  React.useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const id = window.setInterval(
+      () => setSecondsLeft((s) => Math.max(0, s - 1)),
+      1000
+    );
+    return () => window.clearInterval(id);
+  }, [secondsLeft]);
 
   const isOtpValid = otp.length === 6;
 
   const handleVerify = async (otpValue?: string) => {
     const otpToVerify = otpValue ?? otp;
-    if (otpToVerify.length !== 6 || isVerifying) {
-      return;
-    }
+    if (otpToVerify.length !== 6 || isVerifying) return;
 
     try {
       setIsVerifying(true);
@@ -71,13 +69,13 @@ function VerifyContent() {
       );
 
       if (response.data.requiresSignup) {
-        router.push(
+        router.replace(
           `/account/signup?phone=${phone}${returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : ''}`
         );
         return;
       }
 
-      router.push(returnUrl ? decodeURIComponent(returnUrl) : '/account');
+      router.replace(returnUrl ? decodeURIComponent(returnUrl) : '/account');
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
@@ -86,14 +84,13 @@ function VerifyContent() {
   };
 
   const handleResend = async () => {
-    if (!phone || isResending) {
-      return;
-    }
+    if (!phone || isResending || secondsLeft > 0) return;
 
     try {
       setIsResending(true);
       setErrorMessage(null);
       await authApi.requestOtp({ mobileNumber: phone });
+      setSecondsLeft(30);
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
@@ -106,135 +103,211 @@ function VerifyContent() {
       style={{
         minHeight: 'var(--app-viewport-height)',
         backgroundColor: colors.background,
-        paddingBottom: `calc(${spacing.md} + var(--safe-area-bottom-with-keyboard))`,
-        scrollPaddingBottom: 'calc(120px + var(--safe-area-bottom-with-keyboard))',
+        color: colors.text.primary,
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      <StickyPageHeader
-        title="Verify Details"
-        onBack={() => router.back()}
+      {/* Header */}
+      <div
+        style={{
+          padding: '12px 16px',
+          paddingTop: 'calc(var(--safe-area-top) + 12px)',
+          display: 'flex',
+          alignItems: 'center',
+        }}
       >
-        <Stack gap={2}>
-          <Text variant="secondary" size="sm">
-            OTP sent to +91-{phone}
-          </Text>
-        </Stack>
-      </StickyPageHeader>
+        <button
+          onClick={() => router.back()}
+          aria-label="Go back"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            background: colors.surface,
+            border: `1px solid ${colors.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <IconChevronLeft size={18} color={colors.text.primary} />
+        </button>
+      </div>
 
-      <Stack gap={spacing.xl} px={spacing.md} pt={spacing.md}>
+      {/* Body */}
+      <div
+        style={{
+          flex: 1,
+          padding: '20px 24px 0',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <div
+          style={{
+            fontFamily:
+              "var(--font-heading), 'Instrument Serif', Georgia, serif",
+            fontSize: 36,
+            lineHeight: 1.05,
+            letterSpacing: -0.6,
+          }}
+        >
+          Enter the code
+        </div>
+        <div
+          style={{
+            fontSize: 14,
+            color: colors.text.secondary,
+            marginTop: 8,
+            lineHeight: 1.5,
+          }}
+        >
+          We&rsquo;ve sent a 6-digit code to{' '}
+          <b style={{ color: colors.text.primary }}>+91 {phone}</b>.{' '}
+          <span
+            onClick={() => router.back()}
+            style={{
+              color: colors.primary,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Wrong number?
+          </span>
+        </div>
 
         {debugOtp && (
-          <Alert color="orange" radius="md">
-            Testing OTP: {debugOtp}
+          <Alert color="orange" radius="md" mt={20}>
+            Testing OTP: <b>{debugOtp}</b>
           </Alert>
         )}
 
         {errorMessage && (
-          <Alert color="red" radius="md">
+          <Alert color="red" radius="md" mt={20}>
             {errorMessage}
           </Alert>
         )}
 
-        <Stack gap={spacing.xl} align="center" mt={spacing.xl}>
-          <Box style={{ position: 'relative', height: '100px', width: '100%' }}>
-            <Center>
-              <ThemeIcon size={80} radius="md" variant="light" color="gray">
-                <IconDeviceMobile size={50} />
-              </ThemeIcon>
-            </Center>
-          </Box>
+        {/* OTP input */}
+        <div style={{ marginTop: 32 }}>
+          <div
+            style={{
+              fontSize: 11,
+              letterSpacing: 1.5,
+              textTransform: 'uppercase',
+              color: colors.text.secondary,
+              marginBottom: 12,
+              paddingLeft: 4,
+            }}
+          >
+            6-digit OTP
+          </div>
+          <PinInput
+            length={6}
+            type="number"
+            size="lg"
+            gap="xs"
+            value={otp}
+            onChange={(value) => {
+              setOtp(value);
+              if (errorMessage) setErrorMessage(null);
+            }}
+            onComplete={(value) => handleVerify(value)}
+            autoFocus
+            styles={{
+              root: {
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: 8,
+                width: '100%',
+              },
+              input: {
+                flex: 1,
+                height: 56,
+                fontSize: 22,
+                fontWeight: 700,
+                color: colors.text.primary,
+                background: colors.surface,
+                border: `1.5px solid ${colors.border}`,
+                borderRadius: 14,
+                textAlign: 'center',
+              },
+            }}
+          />
+        </div>
 
-          <Stack gap={spacing.md} w="100%">
-            <Text
-              size="xs"
-              variant="secondary"
-              style={{ textTransform: 'uppercase' }}
-            >
-              Enter OTP
-            </Text>
-            <Center>
-              <PinInput
-                length={6}
-                type="number"
-                size="md"
-                gap="md"
-                value={otp}
-                onChange={(value) => {
-                  setOtp(value);
-                  if (errorMessage) {
-                    setErrorMessage(null);
-                  }
-                }}
-                onComplete={(value) => handleVerify(value)}
-                autoFocus
-                styles={{
-                  input: {
-                    border: 'none',
-                    borderBottom: `2px solid ${colors.primary}`,
-                    borderRadius: 0,
-                    fontSize: typography.fontSize.xl,
-                    fontWeight: typography.fontWeight.bold,
-                    color: colors.primary,
-                    backgroundColor: 'transparent',
-                    '&:focus': {
-                      borderColor: colors.primary,
-                    },
-                  },
-                }}
-              />
-            </Center>
-            <Text size="sm" variant="secondary">
-              Didn't receive the OTP?{' '}
-              <span
-                style={{
-                  cursor: isResending ? 'default' : 'pointer',
-                  color: colors.primary,
-                  pointerEvents: isResending ? 'none' : 'auto',
-                }}
-                onClick={handleResend}
-              >
-                {isResending ? 'Resending...' : 'Resend OTP'}
-              </span>
-            </Text>
-          </Stack>
-        </Stack>
-
-        <Button
-          fullWidth
-          size="lg"
-          color={colors.primary}
-          radius="md"
-          disabled={!isOtpValid || isVerifying}
-          loading={isVerifying}
-          onClick={() => handleVerify()}
-          styles={{
-            root: {
-              height: '50px',
-              backgroundColor: isOtpValid && !isVerifying ? colors.primary : '#FFCCB0',
-              color: colors.text.inverse,
-            },
-            label: {
-              fontSize: typography.fontSize.base,
-              fontWeight: typography.fontWeight.bold,
-            },
+        {/* Resend */}
+        <div
+          style={{
+            marginTop: 20,
+            fontSize: 13,
+            color: colors.text.secondary,
+            textAlign: 'center',
           }}
         >
-          VERIFY AND PROCEED
-        </Button>
-      </Stack>
+          {secondsLeft > 0 ? (
+            <>
+              Resend code in <b style={{ color: colors.text.primary }}>
+                {String(Math.floor(secondsLeft / 60)).padStart(1, '0')}:
+                {String(secondsLeft % 60).padStart(2, '0')}
+              </b>
+            </>
+          ) : (
+            <span
+              onClick={handleResend}
+              style={{
+                color: colors.primary,
+                fontWeight: 700,
+                cursor: isResending ? 'default' : 'pointer',
+                opacity: isResending ? 0.6 : 1,
+              }}
+            >
+              {isResending ? 'Resending…' : 'Resend OTP'}
+            </span>
+          )}
+        </div>
+
+        {/* Verify button */}
+        <button
+          disabled={!isOtpValid || isVerifying}
+          onClick={() => handleVerify()}
+          style={{
+            marginTop: 28,
+            width: '100%',
+            height: 54,
+            borderRadius: 27,
+            background:
+              isOtpValid && !isVerifying ? colors.primary : colors.text.faint,
+            color: colors.text.inverse,
+            border: 'none',
+            fontSize: 14,
+            fontWeight: 700,
+            cursor:
+              isOtpValid && !isVerifying ? 'pointer' : 'not-allowed',
+            fontFamily: 'inherit',
+            letterSpacing: 0.3,
+          }}
+        >
+          {isVerifying ? 'Verifying…' : 'VERIFY & CONTINUE'}
+        </button>
+
+        <div
+          style={{
+            marginTop: 'auto',
+            paddingTop: 32,
+            paddingBottom: 'calc(20px + var(--safe-area-bottom))',
+          }}
+        />
+      </div>
     </Box>
   );
 }
 
 export default function VerifyPage() {
   return (
-    <Suspense
-      fallback={
-        <Box p={spacing.md}>
-          <Text>Loading...</Text>
-        </Box>
-      }
-    >
+    <Suspense fallback={null}>
       <VerifyContent />
     </Suspense>
   );

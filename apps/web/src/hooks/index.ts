@@ -6,3 +6,4 @@
 
 export * from './use-api';
 export * from './use-url-state';
+export * from './useScrollDirection';

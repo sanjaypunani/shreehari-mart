@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Box, Stack, UnstyledButton, ScrollArea } from '@mantine/core';
-import { colors, spacing, radius, typography } from '../../theme';
+import { Box, Stack, UnstyledButton } from '@mantine/core';
+import { IconApps } from '@tabler/icons-react';
+import { colors } from '../../theme';
 import { Text, Image } from '../ui';
 
 export interface CategorySidebarItem {
@@ -25,88 +26,101 @@ export function CategorySidebar({
   return (
     <Box
       style={{
-        width: '90px',
-        height: 'calc(var(--app-viewport-height) - 70px)',
-        backgroundColor: 'rgba(255, 255, 255, 0.78)',
+        width: 88,
+        flexShrink: 0,
+        overflow: 'auto',
+        background: colors.surfaceAlt,
         borderRight: `1px solid ${colors.border}`,
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'sticky',
-        top: 70,
-        backdropFilter: 'blur(8px)',
       }}
     >
-      <ScrollArea style={{ height: '100%' }} scrollbarSize={4}>
-        <Stack gap={0}>
-          {categories.map((category) => {
-            const isSelected = category.id === selectedCategoryId;
-            return (
-              <UnstyledButton
-                key={category.id}
-                onClick={() => onSelectCategory(category.id)}
+      <Stack gap={0}>
+        {categories.map((category) => {
+          const isSelected = category.id === selectedCategoryId;
+          return (
+            <UnstyledButton
+              key={category.id}
+              onClick={() => onSelectCategory(category.id)}
+              style={{
+                width: '100%',
+                padding: '14px 6px 12px',
+                background: isSelected ? colors.background : 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 6,
+                position: 'relative',
+                borderBottom: `1px solid ${colors.border}`,
+              }}
+            >
+              {/* Active indicator bar */}
+              {isSelected && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 10,
+                    bottom: 10,
+                    width: 3,
+                    borderRadius: '0 2px 2px 0',
+                    background: colors.primary,
+                  }}
+                />
+              )}
+
+              {/* Category thumbnail */}
+              <Box
                 style={{
-                  padding: `${spacing.sm} 4px`,
-                  backgroundColor: isSelected ? 'rgba(31, 122, 99, 0.1)' : 'transparent',
-                  borderLeft: isSelected
-                    ? `4px solid ${colors.primary}`
-                    : '4px solid transparent',
+                  width: 56,
+                  height: 56,
+                  borderRadius: 14,
+                  overflow: 'hidden',
+                  border: isSelected
+                    ? `2px solid ${colors.primary}`
+                    : `1px solid ${colors.border}`,
+                  background: colors.background,
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'all 0.2s ease',
-                  position: 'relative',
                 }}
               >
-                {/* Category Image */}
-                <Box
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    marginBottom: spacing.xs,
-                    border: `1px solid ${isSelected ? colors.primary : colors.border}`,
-                    backgroundColor: 'white',
-                    padding: '4px',
-                  }}
-                >
+                {category.image ? (
                   <Image
                     src={category.image}
                     alt={category.name}
                     width="100%"
                     height="100%"
-                    fit="contain"
+                    fit="cover"
                     withPlaceholder
                   />
-                </Box>
+                ) : (
+                  <IconApps
+                    size={26}
+                    color={isSelected ? colors.primary : colors.text.secondary}
+                    stroke={1.6}
+                  />
+                )}
+              </Box>
 
-                {/* Category Name */}
-                <Text
-                  size="xs"
-                  variant={isSelected ? 'primary' : 'secondary'}
-                  style={{
-                    fontSize: '9px',
-                    textAlign: 'center',
-                    lineHeight: 1.1,
-                    fontWeight: isSelected
-                      ? typography.fontWeight.bold
-                      : typography.fontWeight.medium,
-                    maxWidth: '100%',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                  }}
-                >
-                  {category.name}
-                </Text>
-              </UnstyledButton>
-            );
-          })}
-        </Stack>
-      </ScrollArea>
+              {/* Category name */}
+              <Text
+                size="xs"
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: isSelected ? 700 : 500,
+                  color: isSelected ? colors.primary : colors.text.primary,
+                  lineHeight: 1.2,
+                  textAlign: 'center',
+                }}
+              >
+                {category.name}
+              </Text>
+            </UnstyledButton>
+          );
+        })}
+      </Stack>
     </Box>
   );
 }

@@ -2,244 +2,218 @@
 
 import React from 'react';
 import { Box, Group, Stack, UnstyledButton } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
 import Link from 'next/link';
-import { IconMapPin, IconChevronDown, IconUser } from '@tabler/icons-react';
-import { colors, spacing, radius, shadow, typography } from '../theme';
-import { Text, SearchInput, IconButton } from './ui';
-import { ProductSearchDialog } from './search';
+import { useRouter } from 'next/navigation';
+import {
+  IconMapPin,
+  IconChevronDown,
+  IconBell,
+  IconShoppingCart,
+  IconSearch,
+  IconMicrophone,
+} from '@tabler/icons-react';
+import { colors, spacing, typography } from '../theme';
+import { Text, IconButton } from './ui';
+import { useCartStore, useDefaultAddress } from '../store';
 
-export function MobileHeader() {
-  const [searchOpened, { open: openSearch, close: closeSearch }] = useDisclosure(false);
-  const [compactMode, setCompactMode] = React.useState(false);
-  const compactModeRef = React.useRef(false);
-  const tickingRef = React.useRef(false);
-  const rafIdRef = React.useRef<number | null>(null);
-  const snapTimerRef = React.useRef<number | null>(null);
-  const snappingRef = React.useRef(false);
+export interface MobileHeaderProps {
+  /** Controls whether the address row is visible (scroll auto-hide). */
+  headerVisible?: boolean;
+}
 
-  React.useEffect(() => {
-    const collapseAt = 72;
-    const expandAt = 28;
-    const snapMin = 16;
-    const snapMax = 90;
-    const collapsedScrollTarget = 92;
-    const snapDelayMs = 140;
+export function MobileHeader({ headerVisible = true }: MobileHeaderProps) {
+  const router = useRouter();
+  const cartCount = useCartStore((state) => state.items.length);
+  const defaultAddress = useDefaultAddress();
 
-    const updateCompactState = (scrollY: number) => {
-      // Hysteresis avoids flicker around a single threshold.
-      const nextCompact = compactModeRef.current
-        ? scrollY > expandAt
-        : scrollY > collapseAt;
+  const headerLine = defaultAddress
+    ? defaultAddress.area
+    : 'Add delivery address';
 
-      if (nextCompact !== compactModeRef.current) {
-        compactModeRef.current = nextCompact;
-        setCompactMode(nextCompact);
-      }
-    };
-
-    const maybeSnapState = () => {
-      if (snappingRef.current) {
-        return;
-      }
-
-      const y = window.scrollY || window.pageYOffset || 0;
-
-      // Only snap in the transition zone to avoid fighting natural scrolling.
-      if (y <= snapMin || y >= snapMax) {
-        return;
-      }
-
-      const target =
-        Math.abs(y - 0) <= Math.abs(y - collapsedScrollTarget)
-          ? 0
-          : collapsedScrollTarget;
-
-      if (Math.abs(target - y) < 8) {
-        return;
-      }
-
-      snappingRef.current = true;
-      window.scrollTo({ top: target, behavior: 'smooth' });
-
-      window.setTimeout(() => {
-        snappingRef.current = false;
-        updateCompactState(window.scrollY || window.pageYOffset || 0);
-      }, 280);
-    };
-
-    const onScroll = () => {
-      if (tickingRef.current) {
-        return;
-      }
-
-      tickingRef.current = true;
-      rafIdRef.current = window.requestAnimationFrame(() => {
-        updateCompactState(window.scrollY || window.pageYOffset || 0);
-        tickingRef.current = false;
-      });
-
-      if (snapTimerRef.current !== null) {
-        window.clearTimeout(snapTimerRef.current);
-      }
-      snapTimerRef.current = window.setTimeout(maybeSnapState, snapDelayMs);
-    };
-
-    updateCompactState(window.scrollY || window.pageYOffset || 0);
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (rafIdRef.current !== null) {
-        window.cancelAnimationFrame(rafIdRef.current);
-      }
-      if (snapTimerRef.current !== null) {
-        window.clearTimeout(snapTimerRef.current);
-      }
-    };
-  }, []);
+  const handleAddressClick = () => {
+    router.push('/account/addresses?select=1&returnUrl=%2F');
+  };
 
   return (
     <Box
       component="header"
       style={{
-        backgroundColor: 'rgba(245, 248, 252, 0.9)',
+        backgroundColor: 'rgba(245, 241, 232, 0.92)',
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        backdropFilter: 'blur(10px)',
-        boxShadow: shadow.sm,
+        backdropFilter: 'blur(12px)',
         paddingTop: 'var(--safe-area-top)',
-        transition: 'padding 220ms ease',
-        willChange: 'padding',
       }}
     >
-      <Stack gap={spacing.xs} px={spacing.md} py={compactMode ? spacing.xs : spacing.sm}>
-        {/* Top Section - Location and Profile */}
-        <Box
-          style={{
-            overflow: 'hidden',
-            maxHeight: compactMode ? 0 : 110,
-            opacity: compactMode ? 0 : 1,
-            transform: compactMode ? 'translateY(-10px)' : 'translateY(0)',
-            transition:
-              'max-height 240ms ease, opacity 220ms ease, transform 240ms ease',
-            pointerEvents: compactMode ? 'none' : 'auto',
-            willChange: 'max-height, opacity, transform',
-          }}
-        >
-          <Group justify="space-between" wrap="nowrap">
-            {/* Location Selector */}
+      {/* ── Address row: hides on scroll-down ── */}
+      <Box
+        style={{
+          overflow: 'hidden',
+          maxHeight: headerVisible ? 80 : 0,
+          opacity: headerVisible ? 1 : 0,
+          transition:
+            'max-height 0.3s cubic-bezier(.4,0,.2,1), opacity 0.25s ease',
+          willChange: 'max-height, opacity',
+        }}
+      >
+        <Stack gap={0} px={spacing.md} pt={spacing.sm}>
+          <Group justify="space-between" wrap="nowrap" mb={spacing.sm}>
             <UnstyledButton
-              style={{
-                flex: 1,
-                minHeight: 'var(--touch-target-size)',
-                borderRadius: radius.lg,
-                border: `1px solid ${colors.border}`,
-                backgroundColor: colors.surface,
-                padding: `${spacing.sm} ${spacing.md}`,
-                boxShadow: '0 8px 18px rgba(15, 23, 42, 0.08)',
-              }}
-              onClick={() => {}}
+              onClick={handleAddressClick}
+              aria-label={
+                defaultAddress
+                  ? `Change delivery address (currently ${defaultAddress.area})`
+                  : 'Add delivery address'
+              }
+              style={{ flex: 1, minWidth: 0 }}
             >
-              <Group gap={spacing.sm} wrap="nowrap">
-                <Box
+              <div>
+                <Text
+                  size="10px"
                   style={{
-                    background:
-                      'linear-gradient(145deg, rgba(31, 122, 99, 0.18), rgba(31, 122, 99, 0.08))',
-                    borderRadius: radius.full,
-                    padding: spacing.sm,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minWidth: '42px',
-                    height: '42px',
-                    border: `1px solid ${colors.border}`,
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase' as const,
+                    color: colors.text.secondary,
                   }}
                 >
-                  <IconMapPin size={19} color={colors.primary} stroke={2.2} />
-                </Box>
-                <Box style={{ flex: 1 }}>
-                  <Group gap={4} wrap="nowrap">
-                    <Text
-                      size="sm"
-                      fw={typography.fontWeight.semibold}
-                      style={{
-                        color: colors.text.primary,
-                        lineHeight: typography.lineHeight.tight,
-                      }}
-                    >
-                      Deliver to home
-                    </Text>
-                    <IconChevronDown
-                      size={15}
-                      color={colors.text.secondary}
-                      stroke={2}
-                    />
-                  </Group>
+                  {defaultAddress ? `Deliver to · ${defaultAddress.label}` : 'Delivering to'}
+                </Text>
+                <Group gap={6} mt={3} wrap="nowrap" style={{ minWidth: 0 }}>
+                  <IconMapPin
+                    size={13}
+                    color={colors.primary}
+                    stroke={2.2}
+                  />
                   <Text
-                    variant="secondary"
-                    size="xs"
+                    size="15px"
+                    fw={typography.fontWeight.semibold}
                     style={{
-                      lineHeight: typography.lineHeight.tight,
-                      marginTop: '2px',
+                      color: colors.text.primary,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      minWidth: 0,
                     }}
                   >
-                    Tap to set address
+                    {headerLine}
                   </Text>
-                </Box>
-              </Group>
+                  <IconChevronDown
+                    size={13}
+                    color={colors.text.primary}
+                    stroke={2}
+                  />
+                </Group>
+              </div>
             </UnstyledButton>
 
-            {/* Profile Icon */}
-            <IconButton
-              component={Link}
-              href="/account"
-              aria-label="Open account"
-              variant="ghost"
-              size="lg"
-              radius="full"
-              style={{
-                width: 'var(--touch-target-size)',
-                minWidth: 'var(--touch-target-size)',
-                height: 'var(--touch-target-size)',
-                border: `1px solid ${colors.border}`,
-                backgroundColor: colors.surface,
-                boxShadow: '0 8px 18px rgba(15, 23, 42, 0.08)',
-              }}
-            >
-              <IconUser size={20} color={colors.primary} stroke={2} />
-            </IconButton>
-          </Group>
-        </Box>
-
-        {/* Search Section */}
-        <Box pb={compactMode ? 2 : spacing.xs}>
-          <UnstyledButton
-            style={{ width: '100%', display: 'block', borderRadius: radius.lg }}
-            onClick={openSearch}
-            aria-label="Search products"
-          >
-            <SearchInput
-              placeholder='Search for "Tomato" or "Milk"'
-              size="md"
-              readOnly
-              style={{ pointerEvents: 'none' }}
-              styles={{
-                input: {
-                  minHeight: '46px',
-                  borderRadius: radius.lg,
+            <Group gap={8}>
+              <IconButton
+                aria-label="Notifications"
+                variant="ghost"
+                size="md"
+                radius="full"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
                   backgroundColor: colors.surface,
                   border: `1px solid ${colors.border}`,
-                  boxShadow: '0 8px 18px rgba(15, 23, 42, 0.08)',
-                },
-              }}
-            />
-          </UnstyledButton>
-        </Box>
-      </Stack>
+                }}
+              >
+                <IconBell size={17} color={colors.text.primary} stroke={1.8} />
+              </IconButton>
 
-      <ProductSearchDialog opened={searchOpened} onClose={closeSearch} />
+              <IconButton
+                component={Link}
+                href="/cart"
+                aria-label="Cart"
+                variant="ghost"
+                size="md"
+                radius="full"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: colors.surface,
+                  border: `1px solid ${colors.border}`,
+                  position: 'relative',
+                }}
+              >
+                <IconShoppingCart
+                  size={17}
+                  color={colors.text.primary}
+                  stroke={1.8}
+                />
+                {cartCount > 0 && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: -2,
+                      right: -2,
+                      minWidth: 18,
+                      height: 18,
+                      padding: '0 5px',
+                      borderRadius: 9,
+                      background: colors.secondary,
+                      color: '#fff',
+                      fontSize: 10,
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {cartCount}
+                  </span>
+                )}
+              </IconButton>
+            </Group>
+          </Group>
+        </Stack>
+      </Box>
+
+      {/* ── Search bar: always visible & sticky ── */}
+      <Box px={spacing.md} pb={spacing.xs}>
+        <UnstyledButton
+          component={Link}
+          href="/search"
+          style={{
+            width: '100%',
+            display: 'block',
+          }}
+          aria-label="Search products"
+        >
+          <Box
+            style={{
+              padding: '10px 16px',
+              borderRadius: 26,
+              background: colors.surface,
+              border: `1px solid ${colors.border}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              cursor: 'pointer',
+            }}
+          >
+            <IconSearch size={18} color={colors.text.secondary} stroke={1.8} />
+            <span
+              style={{
+                flex: 1,
+                fontSize: 14,
+                color: colors.text.faint,
+              }}
+            >
+              Search &quot;tomatoes&quot;, &quot;basil&quot;...
+            </span>
+            <IconMicrophone
+              size={18}
+              color={colors.primary}
+              stroke={1.8}
+            />
+          </Box>
+        </UnstyledButton>
+      </Box>
     </Box>
   );
 }
