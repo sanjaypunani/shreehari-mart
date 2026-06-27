@@ -81,12 +81,14 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
             background: 'var(--brand-bg)',
             display: 'flex',
             flexDirection: 'column',
+            position: 'relative',
           }}
         >
           {shouldShowHeader && <MobileHeader headerVisible={chromeVisible} />}
           <Box
             ref={scrollRef}
             pb={mainBottomPadding}
+            pt={shouldShowHeader ? 'calc(106px + var(--safe-area-top))' : 0}
             style={{
               flex: 1,
               minHeight: 0,
