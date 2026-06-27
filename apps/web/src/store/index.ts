@@ -11,6 +11,7 @@ export {
   useIsAuthenticated,
   useTheme,
   useSidebarCollapsed,
+  useChromeVisible,
 } from './app-store';
 
 export {

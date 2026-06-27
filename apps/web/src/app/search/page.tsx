@@ -6,23 +6,13 @@ import { IconSearch, IconX } from '@tabler/icons-react';
 import { colors } from '../../theme';
 import { Image } from '../../components/ui';
 import {
-  ProductDetailDrawer,
   VariantSheet,
   VariantSheetProduct,
 } from '../../components/products';
-import { useProducts } from '../../hooks/use-api';
+import { useProducts, useOrders } from '../../hooks/use-api';
 import { ProductDto } from '@shreehari/types';
-import { useCartStore } from '../../store';
+import { useCartStore, useUser, useAppStore } from '../../store';
 import { toApiAssetUrl } from '../../config/api';
-
-const TRENDING = [
-  'Tomatoes',
-  'Onion',
-  'Spinach',
-  'Mushrooms',
-  'Carrots',
-  'Basil',
-];
 
 interface SearchResultProduct {
   id: string;
@@ -51,13 +41,11 @@ function mapProduct(apiProduct: ProductDto): SearchResultProduct {
 export default function SearchPage() {
   const [query, setQuery] = React.useState('');
   const [debouncedQuery, setDebouncedQuery] = React.useState('');
-  const [drawerOpened, setDrawerOpened] = React.useState(false);
-  const [selectedProduct, setSelectedProduct] =
-    React.useState<SearchResultProduct | null>(null);
   const [variantSheetProduct, setVariantSheetProduct] =
     React.useState<VariantSheetProduct | null>(null);
 
   const cartItems = useCartStore((state) => state.items);
+  const user = useUser();
 
   // Debounce query so we don't fire a request on every keystroke
   React.useEffect(() => {
@@ -88,6 +76,48 @@ export default function SearchPage() {
     { enabled: !isSearching }
   );
 
+  // Fetch past orders to list previously ordered items
+  const { data: ordersResponse } = useOrders(
+    { customerId: user?.customerId || '', limit: 30 },
+    { enabled: !!user?.customerId && !isSearching }
+  );
+
+  // Extract unique productIds from past orders
+  const pastProductIds = React.useMemo(() => {
+    if (!ordersResponse) return new Set<string>();
+    const rawOrders = ordersResponse as any;
+    const resolvedOrders = Array.isArray(rawOrders?.data?.data)
+      ? rawOrders.data.data
+      : Array.isArray(rawOrders?.data)
+        ? rawOrders.data
+        : [];
+    
+    const ids = new Set<string>();
+    resolvedOrders.forEach((order: any) => {
+      if (order.items && Array.isArray(order.items)) {
+        order.items.forEach((item: any) => {
+          if (item.productId) {
+            ids.add(item.productId);
+          }
+        });
+      }
+    });
+    return ids;
+  }, [ordersResponse]);
+
+  // Fetch all products to resolve full details of previously ordered items
+  const { data: allProductsResponse } = useProducts(
+    { limit: 150, isAvailable: true },
+    { enabled: !isSearching && pastProductIds.size > 0 }
+  );
+
+  const pastOrderedProducts = React.useMemo(() => {
+    if (!allProductsResponse || pastProductIds.size === 0) return [];
+    const products: SearchResultProduct[] = (allProductsResponse?.data || []).map(mapProduct);
+    const cartItemIds = new Set(cartItems.map((item) => item.id));
+    return products.filter((p) => pastProductIds.has(p.id) && !cartItemIds.has(p.id));
+  }, [allProductsResponse, pastProductIds, cartItems]);
+
   const results: SearchResultProduct[] = (searchResponse?.data || []).map(
     mapProduct
   );
@@ -109,8 +139,25 @@ export default function SearchPage() {
   };
 
   const handleOpenProduct = (product: SearchResultProduct) => {
-    setSelectedProduct(product);
-    setDrawerOpened(true);
+    handleAddToCart(product);
+  };
+
+  const lastScrollTop = React.useRef(0);
+  const setChromeVisible = useAppStore((state) => state.setChromeVisible);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const currentScrollTop = e.currentTarget.scrollTop;
+    const atTop = currentScrollTop <= 60;
+
+    if (atTop) {
+      setChromeVisible(true);
+    } else {
+      const diff = currentScrollTop - lastScrollTop.current;
+      if (Math.abs(diff) >= 10) {
+        setChromeVisible(diff <= 0);
+      }
+    }
+    lastScrollTop.current = currentScrollTop;
   };
 
   return (
@@ -183,38 +230,101 @@ export default function SearchPage() {
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px 20px 30px' }}>
+      <div
+        onScroll={handleScroll}
+        style={{ flex: 1, overflow: 'auto', padding: '16px 20px 30px' }}
+      >
         {!isSearching ? (
           <>
-            <SectionLabel>Trending now</SectionLabel>
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 8,
-              }}
-            >
-              {TRENDING.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setQuery(t)}
-                  style={{
-                    padding: '9px 14px',
-                    borderRadius: 20,
-                    background: colors.surface,
-                    border: `1px solid ${colors.border}`,
-                    fontSize: 13,
-                    fontFamily: 'inherit',
-                    color: colors.text.primary,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
+            {pastOrderedProducts.length > 0 && (
+              <Box mb={28}>
+                <SectionLabel>Ordered in the past</SectionLabel>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {pastOrderedProducts.map((p) => {
+                    const inCartQty = cartItems
+                      .filter((i) => i.id === p.id)
+                      .reduce((sum, i) => sum + i.quantity, 0);
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => handleOpenProduct(p)}
+                        style={{
+                          padding: '10px 12px',
+                          borderRadius: 14,
+                          background: colors.surface,
+                          border: `1px solid ${colors.border}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Image
+                          src={p.image}
+                          alt={p.name}
+                          width={48}
+                          height={48}
+                          radius={10}
+                          fit="cover"
+                          withPlaceholder
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 600,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {p.name}
+                          </div>
+                          <div style={{ fontSize: 11, color: colors.text.secondary, marginTop: 1 }}>
+                            ₹{Math.round(p.price)} · {p.quantity}
+                          </div>
+                        </div>
+                        <div onClick={(e) => e.stopPropagation()}>
+                          {inCartQty > 0 ? (
+                            <div
+                              style={{
+                                padding: '5px 10px',
+                                borderRadius: 12,
+                                background: colors.primary,
+                                color: colors.text.inverse,
+                                fontSize: 11,
+                                fontWeight: 700,
+                              }}
+                            >
+                              {inCartQty} in cart
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleAddToCart(p)}
+                              style={{
+                                padding: '5px 12px',
+                                borderRadius: 12,
+                                background: 'transparent',
+                                color: colors.primary,
+                                border: `1.5px solid ${colors.primary}`,
+                                fontSize: 11,
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                fontFamily: 'inherit',
+                              }}
+                            >
+                              ADD
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Box>
+            )}
 
-            <div style={{ marginTop: 28 }}>
+            <div style={{ marginTop: pastOrderedProducts.length > 0 ? 28 : 0 }}>
               <SectionLabel>In season</SectionLabel>
             </div>
             <div
@@ -385,13 +495,8 @@ export default function SearchPage() {
             )}
           </>
         )}
+        <Box h="calc(88px + var(--safe-area-bottom) + 16px)" />
       </div>
-
-      <ProductDetailDrawer
-        opened={drawerOpened}
-        onClose={() => setDrawerOpened(false)}
-        product={selectedProduct ?? undefined}
-      />
 
       <VariantSheet
         product={variantSheetProduct}

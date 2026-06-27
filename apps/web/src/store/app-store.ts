@@ -31,6 +31,7 @@ interface UIState {
   sidebarCollapsed: boolean;
   theme: 'light' | 'dark';
   notifications: boolean;
+  chromeVisible: boolean;
 }
 
 /**
@@ -54,6 +55,7 @@ interface AppStore {
   setTheme: (theme: 'light' | 'dark') => void;
   toggleTheme: () => void;
   setNotifications: (enabled: boolean) => void;
+  setChromeVisible: (visible: boolean) => void;
 }
 
 /**
@@ -69,6 +71,7 @@ const initialState = {
     sidebarCollapsed: false,
     theme: 'light' as const,
     notifications: true,
+    chromeVisible: true,
   },
 };
 
@@ -198,6 +201,19 @@ export const useAppStore = create<AppStore>()(
             'ui/setNotifications'
           );
         },
+
+        setChromeVisible: (visible) => {
+          set(
+            (state) => ({
+              ui: {
+                ...state.ui,
+                chromeVisible: visible,
+              },
+            }),
+            false,
+            'ui/setChromeVisible'
+          );
+        },
       }),
       {
         name: 'shreehari-mart-storage', // localStorage key
@@ -232,3 +248,5 @@ export const useIsAuthenticated = () =>
 export const useTheme = () => useAppStore((state) => state.ui.theme);
 export const useSidebarCollapsed = () =>
   useAppStore((state) => state.ui.sidebarCollapsed);
+export const useChromeVisible = () =>
+  useAppStore((state) => state.ui.chromeVisible);

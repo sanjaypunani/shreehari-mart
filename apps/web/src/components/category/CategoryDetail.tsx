@@ -13,7 +13,7 @@ import {
 import { CategorySidebar } from './CategorySidebar';
 import { useProducts, useCategory, useCategories } from '../../hooks/use-api';
 import { ProductDto } from '@shreehari/types';
-import { useCartStore } from '../../store';
+import { useCartStore, useAppStore } from '../../store';
 import { toApiAssetUrl } from '../../config/api';
 
 const ALL_CATEGORY_ID = 'all';
@@ -86,6 +86,24 @@ export function CategoryDetail() {
   };
 
   const handleProductClick = handleAddToCart;
+
+  const lastScrollTop = React.useRef(0);
+  const setChromeVisible = useAppStore((state) => state.setChromeVisible);
+
+  const handleScrollChange = ({ y }: { y: number }) => {
+    const currentScrollTop = y;
+    const atTop = currentScrollTop <= 60;
+
+    if (atTop) {
+      setChromeVisible(true);
+    } else {
+      const diff = currentScrollTop - lastScrollTop.current;
+      if (Math.abs(diff) >= 10) {
+        setChromeVisible(diff <= 0);
+      }
+    }
+    lastScrollTop.current = currentScrollTop;
+  };
 
   return (
     <Box
@@ -178,7 +196,10 @@ export function CategoryDetail() {
           }}
         >
           {/* Product grid */}
-          <ScrollArea style={{ flex: 1 }}>
+          <ScrollArea
+            style={{ flex: 1 }}
+            onScrollPositionChange={handleScrollChange}
+          >
             <Box style={{ padding: '6px 10px 30px' }}>
               {isLoading ? (
                 <SimpleGrid
@@ -210,13 +231,7 @@ export function CategoryDetail() {
                   ))}
                 </SimpleGrid>
               )}
-              <Box
-                h={
-                  hasCartItems
-                    ? 'calc(76px + 88px)'
-                    : '88px'
-                }
-              />
+              <Box h="calc(88px + var(--safe-area-bottom) + 16px)" />
             </Box>
           </ScrollArea>
         </Box>

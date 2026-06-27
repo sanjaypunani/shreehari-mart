@@ -5,7 +5,7 @@ import { AppShell, Box } from '@mantine/core';
 import { usePathname } from 'next/navigation';
 import { MobileHeader } from './MobileHeader';
 import { CartFab } from './cart';
-import { useCartStore } from '../store';
+import { useCartStore, useAppStore } from '../store';
 import { BottomTabNavigation } from './BottomTabNavigation';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 
@@ -59,7 +59,22 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
 
   // Scroll-driven auto-hide
   const { scrollDirection, isAtTop, scrollRef } = useScrollDirection();
-  const chromeVisible = isAtTop || scrollDirection === 'up' || scrollDirection === null;
+  const localChromeVisible = isAtTop || scrollDirection === 'up' || scrollDirection === null;
+
+  const chromeVisible = useAppStore((state) => state.ui.chromeVisible);
+  const setChromeVisible = useAppStore((state) => state.setChromeVisible);
+
+  const isViewportLocked = isCategoryPage || isSearchPage || isAccountFlow;
+
+  React.useEffect(() => {
+    setChromeVisible(true);
+  }, [pathname, setChromeVisible]);
+
+  React.useEffect(() => {
+    if (!isViewportLocked) {
+      setChromeVisible(localChromeVisible);
+    }
+  }, [localChromeVisible, isViewportLocked, setChromeVisible]);
 
   // Original tab bar padding offset is 88px
   const mainBottomPadding = isAccountFlow
@@ -87,12 +102,12 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
           {shouldShowHeader && <MobileHeader headerVisible={chromeVisible} />}
           <Box
             ref={scrollRef}
-            pb={mainBottomPadding}
+            pb={isViewportLocked ? 0 : mainBottomPadding}
             pt={shouldShowHeader ? 'calc(106px + var(--safe-area-top))' : 0}
             style={{
               flex: 1,
               minHeight: 0,
-              overflowY: 'auto',
+              overflowY: isViewportLocked ? 'hidden' : 'auto',
               WebkitOverflowScrolling: 'touch',
             }}
           >

@@ -5,6 +5,7 @@ import { Box, Stack, UnstyledButton } from '@mantine/core';
 import { IconApps } from '@tabler/icons-react';
 import { colors } from '../../theme';
 import { Text, Image } from '../ui';
+import { useAppStore } from '../../store';
 
 export interface CategorySidebarItem {
   id: string;
@@ -23,8 +24,27 @@ export function CategorySidebar({
   selectedCategoryId,
   onSelectCategory,
 }: CategorySidebarProps) {
+  const lastScrollTop = React.useRef(0);
+  const setChromeVisible = useAppStore((state) => state.setChromeVisible);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const currentScrollTop = e.currentTarget.scrollTop;
+    const atTop = currentScrollTop <= 40;
+
+    if (atTop) {
+      setChromeVisible(true);
+    } else {
+      const diff = currentScrollTop - lastScrollTop.current;
+      if (Math.abs(diff) >= 10) {
+        setChromeVisible(diff <= 0);
+      }
+    }
+    lastScrollTop.current = currentScrollTop;
+  };
+
   return (
     <Box
+      onScroll={handleScroll}
       style={{
         width: 88,
         flexShrink: 0,
@@ -120,6 +140,8 @@ export function CategorySidebar({
             </UnstyledButton>
           );
         })}
+        {/* Spacer to clear the bottom tab bar */}
+        <Box h="calc(88px + var(--safe-area-bottom))" style={{ flexShrink: 0 }} />
       </Stack>
     </Box>
   );

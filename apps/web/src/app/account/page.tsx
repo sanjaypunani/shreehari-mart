@@ -27,7 +27,24 @@ export default function AccountPage() {
   const auth = useAuth();
   const logout = useAppStore((state) => state.logout);
   const updateUser = useAppStore((state) => state.updateUser);
+  const setChromeVisible = useAppStore((state) => state.setChromeVisible);
   const goToLogin = () => router.push('/login?returnUrl=%2Faccount');
+
+  const lastScrollTop = React.useRef(0);
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const currentScrollTop = e.currentTarget.scrollTop;
+    const atTop = currentScrollTop <= 40;
+
+    if (atTop) {
+      setChromeVisible(true);
+    } else {
+      const diff = currentScrollTop - lastScrollTop.current;
+      if (Math.abs(diff) >= 10) {
+        setChromeVisible(diff <= 0);
+      }
+    }
+    lastScrollTop.current = currentScrollTop;
+  };
 
   const [profile, setProfile] = React.useState<AuthProfilePayload | null>(null);
   const [loadingProfile, setLoadingProfile] = React.useState(false);
@@ -251,6 +268,7 @@ export default function AccountPage() {
       </Box>
 
       <div
+        onScroll={handleScroll}
         style={{
           flex: 1,
           overflow: 'auto',
@@ -520,7 +538,7 @@ export default function AccountPage() {
           </>
         )}
 
-        <div style={{ height: 88 }} />
+        <Box h="calc(88px + var(--safe-area-bottom) + 16px)" />
       </div>
     </Box>
   );
