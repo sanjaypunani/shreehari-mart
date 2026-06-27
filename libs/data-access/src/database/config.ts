@@ -43,6 +43,8 @@ if (
     // Prefer a full connection URL (Supabase / production), fall back to individual vars (local dev)
     const databaseUrl =
       process.env['cropzo_database_POSTGRES_URL_NON_POOLING'] ||
+      process.env['POSTGRES_URL_NON_POOLING'] ||
+      process.env['POSTGRES_URL'] ||
       process.env['DATABASE_URL'] ||
       '';
 
