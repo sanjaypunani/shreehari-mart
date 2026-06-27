@@ -20,6 +20,10 @@ export class DatabaseConnection {
         await this.dataSource.initialize();
         this.isConnected = true;
         console.log('✅ Database connection established successfully');
+        
+        console.log('🔄 Running pending migrations...');
+        const executed = await this.dataSource.runMigrations();
+        console.log(`✅ Migrations completed. Executed: ${executed.length}`);
       }
     } catch (error) {
       console.error('❌ Database connection failed:', error);

@@ -88,8 +88,17 @@ if (
         Category,
         DeliveryPartner,
       ],
-      migrations: ['src/database/migrations/*.ts'],
-      subscribers: ['src/database/subscribers/*.ts'],
+      migrations: [
+        require('./migrations/1726239600000-UpdateProductSchema').UpdateProductSchema1726239600000,
+        require('./migrations/1726500000000-CreateCustomerModule').CreateCustomerModule1726500000000,
+        require('./migrations/1726650000000-RefineOrderModule').RefineOrderModule1726650000000,
+        require('./migrations/1726800000000-CreateMonthlyBillingModule').CreateMonthlyBillingModule1726800000000,
+        require('./migrations/1760000000000-CreateUsersAndCustomerLink').CreateUsersAndCustomerLink1760000000000,
+        require('./migrations/1760000001000-CreateCategoryAndLinkProduct').CreateCategoryAndLinkProduct1760000001000,
+        require('./migrations/1760000002000-AddCategorySortOrder').AddCategorySortOrder1760000002000,
+        require('./migrations/1760100000000-CreateDeliveryPartnerModule').CreateDeliveryPartnerModule1760100000000,
+      ],
+      subscribers: [],
     };
 
     AppDataSource = new DataSource(DatabaseConfig);
