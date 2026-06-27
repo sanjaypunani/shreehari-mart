@@ -56,6 +56,15 @@ export const createServer = () => {
   // Serve static files from uploads directory
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+  // Root endpoint
+  app.get('/', (req, res) => {
+    res.json({
+      message: 'Welcome to the Shreehari Mart API!',
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   // Health check
   app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
