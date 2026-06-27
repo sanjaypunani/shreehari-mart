@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "npm install && node ../../scripts/build-api-vercel.js",
+  "installCommand": "cd ../.. && npm install && node scripts/build-api-vercel.js",
   "builds": [
     {
       "src": "dist/vercel.js",
