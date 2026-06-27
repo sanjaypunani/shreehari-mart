@@ -63,8 +63,8 @@
 }
 
 html {
-  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
-           env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  margin: 0;
+  padding: 0;
   -webkit-text-size-adjust: 100%;
   font-family:
     var(--font-body),
@@ -84,7 +84,6 @@ body {
   color: var(--brand-text);
   background: var(--brand-bg);
   line-height: inherit;
-  max-height: calc(100dvh - env(safe-area-inset-bottom));
   margin: 0;
   padding: 0;
   text-rendering: optimizeLegibility;
