@@ -196,28 +196,28 @@ export function MobileHeader({ headerVisible = true }: MobileHeaderProps) {
           >
             <Box
               style={{
-                padding: '8px 16px',
-                borderRadius: 26,
+                padding: '10px 14px',
+                borderRadius: 22,
                 background: colors.surface,
                 border: `1px solid ${colors.border}`,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 10,
+                gap: 8,
                 cursor: 'pointer',
               }}
             >
-              <IconSearch size={18} color={colors.text.secondary} stroke={1.8} />
+              <IconSearch size={17} color={colors.text.secondary} stroke={1.8} />
               <span
                 style={{
                   flex: 1,
                   fontSize: 14,
-                  color: colors.text.faint,
+                  color: colors.text.secondary,
                 }}
               >
-                Search &quot;tomatoes&quot;, &quot;basil&quot;...
+                Search produce, farms…
               </span>
               <IconMicrophone
-                size={18}
+                size={17}
                 color={colors.primary}
                 stroke={1.8}
               />

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Image } from '@mantine/core';
 import { IconX } from '@tabler/icons-react';
 import { colors } from '../../theme';
-import { useCartStore } from '../../store';
+import { useCartStore, useChromeVisible } from '../../store';
 import { calculateItemPrice } from '../../utils';
 
 const ANIMATION_MS = 300;
@@ -38,16 +38,19 @@ export interface VariantSheetProduct {
 interface VariantSheetProps {
   product: VariantSheetProduct | null;
   onClose: () => void;
+  bottomOffset?: string;
 }
 
 export function VariantSheet({
   product: incomingProduct,
   onClose,
+  bottomOffset = '0px',
 }: VariantSheetProps) {
   const items = useCartStore((s) => s.items);
   const addItem = useCartStore((s) => s.addItem);
   const incrementLine = useCartStore((s) => s.incrementLine);
   const decrementLine = useCartStore((s) => s.decrementLine);
+  const chromeVisible = useChromeVisible();
 
   const [currentProduct, setCurrentProduct] =
     useState<VariantSheetProduct | null>(incomingProduct);
@@ -109,6 +112,8 @@ export function VariantSheet({
         ? 'kg'
         : 'kg'; // gm-priced products are still presented per-kg in subhead
 
+  const isFloating = chromeVisible && bottomOffset !== '0px';
+
   return (
     <>
       <div
@@ -127,21 +132,21 @@ export function VariantSheet({
         onClick={(e) => e.stopPropagation()}
         style={{
           position: 'fixed',
-          left: 0,
-          right: 0,
-          bottom: 0,
+          left: isFloating ? 12 : 0,
+          right: isFloating ? 12 : 0,
+          bottom: isFloating ? `calc(${bottomOffset} + 12px + var(--safe-area-bottom))` : 0,
           zIndex: 1001,
           background: colors.surface,
-          borderRadius: '24px 24px 0 0',
+          borderRadius: isFloating ? '24px' : '24px 24px 0 0',
           padding: '12px 20px 14px',
-          paddingBottom: 'calc(14px + var(--safe-area-bottom))',
+          paddingBottom: isFloating ? '16px' : 'calc(14px + var(--safe-area-bottom))',
           color: colors.text.primary,
           maxHeight: '82%',
           display: 'flex',
           flexDirection: 'column',
-          transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
-          transition: `transform ${ANIMATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1)`,
-          willChange: 'transform',
+          transform: isVisible ? 'translateY(0)' : 'translateY(110%)',
+          transition: `transform ${ANIMATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1), bottom ${ANIMATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1), left ${ANIMATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1), right ${ANIMATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1), border-radius ${ANIMATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1)`,
+          willChange: 'transform, bottom, left, right, border-radius',
           boxShadow: '0 -16px 40px rgba(28, 42, 33, 0.18)',
         }}
       >

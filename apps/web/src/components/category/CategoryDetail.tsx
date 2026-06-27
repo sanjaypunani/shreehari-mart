@@ -240,6 +240,7 @@ export function CategoryDetail() {
       <VariantSheet
         product={variantSheetProduct}
         onClose={() => setVariantSheetProduct(null)}
+        bottomOffset="88px"
       />
     </Box>
   );

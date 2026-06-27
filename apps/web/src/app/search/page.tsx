@@ -44,6 +44,17 @@ export default function SearchPage() {
   const [variantSheetProduct, setVariantSheetProduct] =
     React.useState<VariantSheetProduct | null>(null);
 
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 150);
+    return () => clearTimeout(timer);
+  }, []);
+
   const cartItems = useCartStore((state) => state.items);
   const user = useUser();
 
@@ -196,6 +207,7 @@ export default function SearchPage() {
         >
           <IconSearch size={17} color={colors.text.secondary} />
           <input
+            ref={inputRef}
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -501,6 +513,7 @@ export default function SearchPage() {
       <VariantSheet
         product={variantSheetProduct}
         onClose={() => setVariantSheetProduct(null)}
+        bottomOffset="88px"
       />
     </Box>
   );
